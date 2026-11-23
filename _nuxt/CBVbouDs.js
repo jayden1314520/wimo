@@ -1,1 +1,0 @@
-import{f as o,g as c,h as n,o as s,c as r,n as _}from"./CtZmTEiq.js";const f=o({__name:"index",async setup(m){let e,t;const a=c();return[e,t]=n(()=>_(a("/ecommerce-form"),{replace:!0})),await e,t(),(l,p)=>(s(),r("div"))}});export{f as default};
