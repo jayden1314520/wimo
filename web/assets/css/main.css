@@ -565,7 +565,7 @@ ul { list-style: none; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -8px); }
 
 /* ============================================================
-   登录即注册弹窗
+   登录 / 注册弹窗
    ============================================================ */
 .auth-mask {
   position: fixed; inset: 0; z-index: 90;
@@ -594,9 +594,37 @@ ul { list-style: none; }
 .auth-card__title { font-size: 19px; font-weight: 600; letter-spacing: .2px; }
 .auth-card__sub { margin-top: 7px; font-size: 12.5px; color: var(--c-text-3); line-height: 1.6; }
 
+/* 登录 / 注册 Tab */
+.auth-tabs {
+  display: flex; gap: 26px; justify-content: center;
+  margin: 2px 0 20px; border-bottom: 1px solid var(--c-line);
+}
+.auth-tabs__item {
+  position: relative; padding: 0 2px 12px;
+  font-size: 14px; color: var(--c-text-3); font-weight: 500;
+  transition: color .16s;
+}
+.auth-tabs__item:hover { color: var(--c-text-2); }
+.auth-tabs__item.is-active { color: var(--c-text); font-weight: 600; }
+.auth-tabs__item.is-active::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; border-radius: 2px; background: var(--c-black);
+}
+
 .auth-form { display: flex; flex-direction: column; gap: 15px; }
 .auth-field { display: flex; flex-direction: column; }
 .auth-field__label { font-size: 12px; font-weight: 500; color: var(--c-text); margin-bottom: 8px; }
+.auth-field__row { display: flex; align-items: center; justify-content: space-between; }
+.auth-field__row .auth-field__label { margin-bottom: 8px; }
+
+/* 文字链接（忘记密码 / 登录方式 / 底部切换） */
+.auth-link {
+  font-size: 12px; color: var(--c-text-2); text-decoration: none;
+  transition: color .16s; padding: 0;
+}
+.auth-link:hover { color: var(--c-text); text-decoration: underline; text-underline-offset: 2px; }
+.auth-link--forgot { margin-bottom: 8px; }
+.auth-way { display: flex; justify-content: flex-end; margin-top: -6px; }
 .auth-input {
   display: flex; align-items: center; gap: 8px;
   height: 40px; padding: 0 12px;
@@ -656,7 +684,8 @@ ul { list-style: none; }
 }
 .auth-submit:hover:not(:disabled) { opacity: .88; }
 .auth-submit:disabled { opacity: .55; cursor: default; }
-.auth-foot { text-align: center; font-size: 11px; line-height: 1.6; color: var(--c-text-3); }
+.auth-foot { text-align: center; font-size: 12px; line-height: 1.6; color: var(--c-text-3); }
+.auth-foot .auth-link { color: var(--c-text); font-weight: 600; margin-left: 2px; }
 
 /* 协议 / 隐私政策 正文 */
 .auth-legal__back {

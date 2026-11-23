@@ -1,16 +1,26 @@
 /**
  * 全局会话与弹层状态（useState 保证 SSR / SSG 安全）
- * - user: 当前登录用户（邮箱）—— 登录即注册，静态演示态存 localStorage
- * - authOpen: 登录弹窗开关
+ * - user: 当前登录用户（邮箱）
+ * - authOpen: 登录/注册弹窗开关
  * - mobileNavOpen: 移动端左侧菜单抽屉开关
  * - toast: 全局轻提示
+ *
+ * 账号库：静态演示环境无后端，账号存 localStorage。
+ * 生产环境必须替换为后端接口（切勿在前端明文存密码）。
  */
 export interface WimoUser {
   email: string
   loginAt: string
 }
 
+interface WimoAccount {
+  email: string
+  password: string
+  createAt: string
+}
+
 const USER_KEY = 'wimo_user'
+const ACCOUNTS_KEY = 'wimo_accounts'
 
 export function useAuth() {
   const user = useState<WimoUser | null>('wimo_user', () => null)
@@ -40,6 +50,36 @@ export function useAuth() {
     if (import.meta.client) localStorage.removeItem(USER_KEY)
   }
 
+  /* ---------------- 演示账号库 ---------------- */
+  function readAccounts(): WimoAccount[] {
+    if (!import.meta.client) return []
+    try {
+      return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]') as WimoAccount[]
+    } catch {
+      return []
+    }
+  }
+
+  function hasAccount(email: string): boolean {
+    return readAccounts().some(a => a.email.toLowerCase() === email.toLowerCase())
+  }
+
+  /** 注册：邮箱已存在则返回 false */
+  function registerAccount(email: string, password: string): boolean {
+    const list = readAccounts()
+    if (list.some(a => a.email.toLowerCase() === email.toLowerCase())) return false
+    list.push({ email, password, createAt: new Date().toISOString() })
+    if (import.meta.client) localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list))
+    return true
+  }
+
+  /** 密码登录校验：'ok' | 'notfound' | 'wrong' */
+  function verifyPassword(email: string, password: string): 'ok' | 'notfound' | 'wrong' {
+    const acc = readAccounts().find(a => a.email.toLowerCase() === email.toLowerCase())
+    if (!acc) return 'notfound'
+    return acc.password === password ? 'ok' : 'wrong'
+  }
+
   const openAuth = () => { authOpen.value = true }
   const closeAuth = () => { authOpen.value = false }
   const openNav = () => { mobileNavOpen.value = true }
@@ -55,6 +95,7 @@ export function useAuth() {
   return {
     user, authOpen, mobileNavOpen, toast,
     restore, signIn, signOut,
+    hasAccount, registerAccount, verifyPassword,
     openAuth, closeAuth, openNav, closeNav, showToast
   }
 }

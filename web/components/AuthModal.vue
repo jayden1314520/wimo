@@ -1,7 +1,7 @@
 <template>
   <Transition name="auth">
     <div v-if="authOpen" class="auth-mask" @click.self="close">
-      <div class="auth-card" role="dialog" aria-modal="true" :aria-label="t('auth.title')">
+      <div class="auth-card" role="dialog" aria-modal="true" :aria-label="t('auth.brandTitle')">
         <button class="auth-card__close icon-btn" :aria-label="t('auth.close')" @click="close">
           <AppIcon name="close" :size="18" />
         </button>
@@ -18,7 +18,6 @@
           </div>
         </template>
 
-        <!-- 登录即注册表单 -->
         <template v-else>
           <div class="auth-card__head">
             <div class="auth-card__logo">
@@ -28,8 +27,22 @@
               </svg>
               <span>{{ t('brand.name') }}</span>
             </div>
-            <h2 class="auth-card__title">{{ t('auth.title') }}</h2>
-            <p class="auth-card__sub">{{ t('auth.subtitle') }}</p>
+
+            <!-- 登录 / 注册 Tab -->
+            <div class="auth-tabs" role="tablist">
+              <button
+                type="button" role="tab" class="auth-tabs__item"
+                :class="{ 'is-active': mode === 'login' }" :aria-selected="mode === 'login'"
+                @click="switchMode('login')"
+              >{{ t('auth.tabLogin') }}</button>
+              <button
+                type="button" role="tab" class="auth-tabs__item"
+                :class="{ 'is-active': mode === 'register' }" :aria-selected="mode === 'register'"
+                @click="switchMode('register')"
+              >{{ t('auth.tabRegister') }}</button>
+            </div>
+            <h2 class="auth-card__title">{{ t(mode === 'login' ? 'auth.loginTitle' : 'auth.registerTitle') }}</h2>
+            <p class="auth-card__sub">{{ t(mode === 'login' ? 'auth.loginSub' : 'auth.registerSub') }}</p>
           </div>
 
           <form class="auth-form" novalidate @submit.prevent="submit">
@@ -47,8 +60,8 @@
               <span v-if="errors.email" class="auth-field__err">{{ errors.email }}</span>
             </div>
 
-            <!-- 验证码 -->
-            <div class="auth-field" :class="{ 'has-error': errors.code }">
+            <!-- 验证码：注册 或 登录且选择验证码登录时显示 -->
+            <div v-if="showCode" class="auth-field" :class="{ 'has-error': errors.code }">
               <label class="auth-field__label" for="auth-code">{{ t('auth.code') }}</label>
               <div class="auth-input auth-input--code">
                 <AppIcon name="shield" :size="16" class="auth-input__icon" />
@@ -64,7 +77,6 @@
                   {{ countdown > 0 ? t('auth.resend', { n: countdown }) : t('auth.sendCode') }}
                 </button>
               </div>
-              <!-- 演示环境：直接给出验证码，便于完整走通流程 -->
               <div v-if="demoCode" class="auth-demo">
                 <AppIcon name="spark" :size="13" />
                 {{ t('auth.demoTip') }} <b>{{ demoCode }}</b>
@@ -72,14 +84,22 @@
               <span v-if="errors.code" class="auth-field__err">{{ errors.code }}</span>
             </div>
 
-            <!-- 密码 -->
-            <div class="auth-field" :class="{ 'has-error': errors.password }">
-              <label class="auth-field__label" for="auth-pwd">{{ t('auth.password') }}</label>
+            <!-- 密码：注册 或 登录且选择密码登录时显示 -->
+            <div v-if="showPassword" class="auth-field" :class="{ 'has-error': errors.password }">
+              <div class="auth-field__row">
+                <label class="auth-field__label" for="auth-pwd">{{ t('auth.password') }}</label>
+                <button
+                  v-if="mode === 'login'" type="button" class="auth-link auth-link--forgot"
+                  @click="showToast(t('auth.forgotTip'))"
+                >{{ t('auth.forgotPwd') }}</button>
+              </div>
               <div class="auth-input">
                 <AppIcon name="lock" :size="16" class="auth-input__icon" />
                 <input
-                  id="auth-pwd" v-model="form.password" :type="showPwd ? 'text' : 'password'"
-                  autocomplete="new-password" :placeholder="t('auth.passwordPh')"
+                  id="auth-pwd" v-model="form.password"
+                  :type="showPwd ? 'text' : 'password'"
+                  :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+                  :placeholder="t('auth.passwordPh')"
                   @input="clearError('password')"
                 />
                 <button type="button" class="auth-input__eye" :aria-label="t('auth.togglePwd')" @click="showPwd = !showPwd">
@@ -89,8 +109,8 @@
               <span v-if="errors.password" class="auth-field__err">{{ errors.password }}</span>
             </div>
 
-            <!-- 确认密码 -->
-            <div class="auth-field" :class="{ 'has-error': errors.confirm }">
+            <!-- 确认密码：仅注册 -->
+            <div v-if="mode === 'register'" class="auth-field" :class="{ 'has-error': errors.confirm }">
               <label class="auth-field__label" for="auth-pwd2">{{ t('auth.confirm') }}</label>
               <div class="auth-input">
                 <AppIcon name="lock" :size="16" class="auth-input__icon" />
@@ -103,8 +123,15 @@
               <span v-if="errors.confirm" class="auth-field__err">{{ errors.confirm }}</span>
             </div>
 
-            <!-- 用户协议 / 隐私政策 -->
-            <div class="auth-agree" :class="{ 'has-error': errors.agree }">
+            <!-- 登录方式切换（仅登录） -->
+            <div v-if="mode === 'login'" class="auth-way">
+              <button type="button" class="auth-link" @click="toggleLoginWay">
+                {{ loginWay === 'password' ? t('auth.switchToCode') : t('auth.switchToPwd') }}
+              </button>
+            </div>
+
+            <!-- 用户协议 / 隐私政策（仅注册） -->
+            <div v-if="mode === 'register'" class="auth-agree" :class="{ 'has-error': errors.agree }">
               <label class="auth-agree__box">
                 <input v-model="form.agree" type="checkbox" @change="clearError('agree')" />
                 <span class="auth-agree__check"><AppIcon name="check" :size="12" /></span>
@@ -119,10 +146,16 @@
             </div>
 
             <button type="submit" class="auth-submit" :disabled="submitting">
-              {{ submitting ? t('auth.submitting') : t('auth.submit') }}
+              {{ submitting ? t('auth.submitting') : t(mode === 'login' ? 'auth.loginSubmit' : 'auth.registerSubmit') }}
             </button>
 
-            <p class="auth-foot">{{ t('auth.foot') }}</p>
+            <!-- 底部模式切换 -->
+            <p class="auth-foot">
+              {{ t(mode === 'login' ? 'auth.noAccount' : 'auth.hasAccount') }}
+              <button type="button" class="auth-link" @click="switchMode(mode === 'login' ? 'register' : 'login')">
+                {{ t(mode === 'login' ? 'auth.toRegister' : 'auth.toLogin') }}
+              </button>
+            </p>
           </form>
         </template>
       </div>
@@ -132,7 +165,13 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-const { authOpen, closeAuth, signIn, showToast } = useAuth()
+const { authOpen, closeAuth, signIn, showToast, registerAccount, verifyPassword, hasAccount } = useAuth()
+
+type Mode = 'login' | 'register'
+type LoginWay = 'password' | 'code'
+
+const mode = ref<Mode>('login')
+const loginWay = ref<LoginWay>('password')
 
 const form = reactive({ email: '', code: '', password: '', confirm: '', agree: false })
 const errors = reactive<Record<string, string>>({})
@@ -147,12 +186,42 @@ let tickTimer: ReturnType<typeof setInterval> | null = null
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/* 字段显隐：注册＝验证码+密码+确认密码；登录按所选方式二选一 */
+const showCode = computed(() => mode.value === 'register' || (mode.value === 'login' && loginWay.value === 'code'))
+const showPassword = computed(() => mode.value === 'register' || (mode.value === 'login' && loginWay.value === 'password'))
+
 const legalParas = computed(() => {
   const raw = t(legalView.value === 'terms' ? 'auth.termsBody' : 'auth.privacyBody')
   return String(raw).split('\n').filter(Boolean)
 })
 
 function clearError(key: string) { delete errors[key] }
+function clearAllErrors() { Object.keys(errors).forEach(k => delete errors[k]) }
+
+function stopCountdown() {
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null }
+  countdown.value = 0
+  demoCode.value = ''
+}
+
+/** 切换登录/注册；保留已填邮箱，其余字段与错误清空 */
+function switchMode(m: Mode) {
+  if (mode.value === m) return
+  mode.value = m
+  form.code = ''; form.password = ''; form.confirm = ''; form.agree = false
+  legalView.value = ''
+  showPwd.value = false
+  loginWay.value = 'password'
+  clearAllErrors()
+  stopCountdown()
+}
+
+function toggleLoginWay() {
+  loginWay.value = loginWay.value === 'password' ? 'code' : 'password'
+  form.code = ''; form.password = ''
+  clearAllErrors()
+  stopCountdown()
+}
 
 function close() {
   closeAuth()
@@ -161,12 +230,12 @@ function close() {
 
 function reset() {
   form.email = ''; form.code = ''; form.password = ''; form.confirm = ''; form.agree = false
-  Object.keys(errors).forEach(k => delete errors[k])
-  demoCode.value = ''
-  countdown.value = 0
+  clearAllErrors()
+  stopCountdown()
   legalView.value = ''
   showPwd.value = false
-  if (tickTimer) { clearInterval(tickTimer); tickTimer = null }
+  mode.value = 'login'
+  loginWay.value = 'password'
 }
 
 /** 发送验证码：静态演示环境不接邮件服务，生成 6 位演示码并倒计时 */
@@ -177,7 +246,6 @@ function sendCode() {
     return
   }
   sending.value = true
-  // 模拟一次网络请求
   setTimeout(() => {
     sending.value = false
     demoCode.value = String(Math.floor(100000 + Math.random() * 900000))
@@ -191,36 +259,63 @@ function sendCode() {
   }, 400)
 }
 
+function checkCode(): boolean {
+  if (!form.code) { errors.code = t('auth.errCodeEmpty'); return false }
+  if (!demoCode.value) { errors.code = t('auth.errCodeSend'); return false }
+  if (form.code !== demoCode.value) { errors.code = t('auth.errCodeWrong'); return false }
+  return true
+}
+
 function validate(): boolean {
-  Object.keys(errors).forEach(k => delete errors[k])
+  clearAllErrors()
   if (!form.email) errors.email = t('auth.errEmailEmpty')
   else if (!EMAIL_RE.test(form.email)) errors.email = t('auth.errEmailInvalid')
 
-  if (!form.code) errors.code = t('auth.errCodeEmpty')
-  else if (!demoCode.value) errors.code = t('auth.errCodeSend')
-  else if (form.code !== demoCode.value) errors.code = t('auth.errCodeWrong')
-
-  if (!form.password) errors.password = t('auth.errPwdEmpty')
-  else if (form.password.length < 6) errors.password = t('auth.errPwdShort')
-
-  if (!form.confirm) errors.confirm = t('auth.errConfirmEmpty')
-  else if (form.confirm !== form.password) errors.confirm = t('auth.errConfirmMismatch')
-
-  if (!form.agree) errors.agree = t('auth.errAgree')
+  if (mode.value === 'register') {
+    checkCode()
+    if (!form.password) errors.password = t('auth.errPwdEmpty')
+    else if (form.password.length < 6) errors.password = t('auth.errPwdShort')
+    if (!form.confirm) errors.confirm = t('auth.errConfirmEmpty')
+    else if (form.confirm !== form.password) errors.confirm = t('auth.errConfirmMismatch')
+    if (!form.agree) errors.agree = t('auth.errAgree')
+  } else if (loginWay.value === 'password') {
+    if (!form.password) errors.password = t('auth.errPwdEmpty')
+  } else {
+    checkCode()
+  }
   return Object.keys(errors).length === 0
 }
 
 function submit() {
   if (!validate()) return
   submitting.value = true
-  // 登录即注册：邮箱不存在则自动创建账号，此处写入本地会话
   setTimeout(() => {
     submitting.value = false
-    signIn(form.email)
+    const email = form.email
+
+    if (mode.value === 'register') {
+      const ok = registerAccount(email, form.password)
+      if (!ok) { errors.email = t('auth.errEmailTaken'); return }
+      signIn(email)
+      closeAuth()
+      showToast(t('auth.registerSuccess'))
+      reset()
+      return
+    }
+
+    // 登录：先确认账号已注册；密码登录再校验密码
+    if (!hasAccount(email)) { errors.email = t('auth.errNotRegistered'); return }
+    if (loginWay.value === 'password') {
+      if (verifyPassword(email, form.password) === 'wrong') {
+        errors.password = t('auth.errWrongPwd')
+        return
+      }
+    }
+    signIn(email)
     closeAuth()
-    showToast(t('auth.success'))
+    showToast(t('auth.loginSuccess'))
     reset()
-  }, 650)
+  }, 600)
 }
 
 function onKey(e: KeyboardEvent) {
