@@ -78,15 +78,13 @@ useHead(() => ({
 }))
 
 /* ---------------- 预览数据 ---------------- */
-const SAMPLE = [
-  '/images/preview/hero.jpg',
-  '/images/preview/shoe1.jpg',
-  '/images/preview/shoe2.jpg',
-  '/images/preview/shoe3.jpg',
-  '/images/preview/shoe4.jpg',
-  '/images/preview/shoe5.jpg',
-  '/images/preview/shoe6.jpg'
-]
+/* 占位示例图：拼接 baseURL，兼容 GitHub Pages 子路径部署 */
+const base = useRuntimeConfig().app.baseURL || '/'
+const previewUrl = (key: string) => `${base}images/preview/${key}.jpg`
+
+const sample = () => [
+  'hero', 'shoe1', 'shoe2', 'shoe3', 'shoe4', 'shoe5', 'shoe6'
+].map(previewUrl)
 
 const generating = ref(false)
 const progress = ref(0)
@@ -94,9 +92,7 @@ const result = ref<string[] | null>(null)
 const records = ref<any[]>([])
 const api = useWimoApi()
 
-const displayItems = computed(() => result.value ?? SAMPLE)
-
-const previewUrl = (key: string) => `/images/preview/${key}.jpg`
+const displayItems = computed(() => result.value ?? sample())
 
 async function openRecords() {
   recordsOpen.value = true
@@ -127,7 +123,7 @@ function localMock(payload: any) {
     id: Date.now(),
     time: new Date().toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US'),
     summary: summarize(payload),
-    images: SAMPLE.slice(0, 4)
+    images: sample().slice(0, 4)
   })
 }
 
@@ -161,19 +157,19 @@ async function onSubmit(payload: any) {
       progress.value = rec.progress ?? 0
       if (rec.status === '2') {
         const keys = (rec.results || '').split(',').filter(Boolean)
-        result.value = keys.length ? keys.map(previewUrl) : [...SAMPLE]
+        result.value = keys.length ? keys.map(previewUrl) : sample()
         break
       }
       if (rec.status === '3') throw new Error(rec.errorMsg || 'generation failed')
     }
-    if (!result.value) result.value = [...SAMPLE]
+    if (!result.value) result.value = sample()
   } catch {
     // 后端未启动时降级为本地模拟，保证页面可演示
     for (let i = 1; i <= 8; i++) {
       await new Promise(r => setTimeout(r, 240))
       progress.value = i
     }
-    result.value = [...SAMPLE]
+    result.value = sample()
     localMock(payload)
   } finally {
     generating.value = false

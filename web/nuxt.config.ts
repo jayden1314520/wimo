@@ -7,13 +7,15 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   app: {
+    // GitHub Pages 子路径部署时由 NUXT_APP_BASE_URL=/wimo/ 注入，默认 /
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'theme-color', content: '#ffffff' }
       ],
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: `${process.env.NUXT_APP_BASE_URL || '/'}favicon.svg` }]
     }
   },
 
