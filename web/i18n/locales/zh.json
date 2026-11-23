@@ -1,11 +1,9 @@
 {
   "brand": {
-    "name": "星创 WIMO",
+    "name": "映物 VIVID",
     "slogan": "用 AI 重新定义电商视觉生产力"
   },
   "nav": {
-    "singleTask": "单任务",
-    "batchTask": "批量任务",
     "login": "登录",
     "language": "语言",
     "theme": "外观模式",
@@ -121,8 +119,8 @@
       "high": "高"
     },
     "model": {
-      "wimo2": "Wimo Image 2",
-      "wimo2pro": "Wimo Image 2 Pro"
+      "wimo2": "映物 Image 2",
+      "wimo2pro": "映物 Image 2 Pro"
     },
     "pageStyle": {
       "minimal": "简约风",
@@ -184,8 +182,8 @@
     "comingSoon": "该功能规划中"
   },
   "seo": {
-    "title": "商品套图 · 星创 WIMO",
+    "title": "商品套图 · 映物 VIVID",
     "description": "上传一张商品图，AI 自动生成电商白底主图、卖点图、场景图、A+ 横幅与促销图，适配淘宝、京东、抖音等平台。",
-    "keywords": "AI 电商作图, 商品套图, 白底图生成, 电商主图, WIMO"
+    "keywords": "AI 电商作图, 商品套图, 白底图生成, 电商主图, 映物 VIVID"
   }
 }

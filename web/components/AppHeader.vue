@@ -8,15 +8,6 @@
         </svg>
         <span class="logo__text">{{ t('brand.name') }}</span>
       </NuxtLink>
-
-      <div class="seg" role="tablist">
-        <button
-          v-for="m in modes" :key="m.value"
-          class="seg__btn" :class="{ 'is-active': mode === m.value }"
-          role="tab" :aria-selected="mode === m.value"
-          @click="mode = m.value"
-        >{{ t(m.label) }}</button>
-      </div>
     </div>
 
     <div class="topbar__right">
@@ -50,12 +41,6 @@
 const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
 
-const modes = [
-  { value: 'single', label: 'nav.singleTask' },
-  { value: 'batch', label: 'nav.batchTask' }
-]
-const mode = useState<'single' | 'batch'>('task-mode', () => 'single')
-
 const langOpen = ref(false)
 const localeList = computed(() =>
   (locales.value as any[]).map(l => ({ code: l.code, name: l.name }))
@@ -75,12 +60,16 @@ function toggleTheme() {
   if (import.meta.client) localStorage.setItem('wimo_theme', theme.value)
 }
 
+function closeLang() {
+  langOpen.value = false
+}
+
 onMounted(() => {
   const saved = localStorage.getItem('wimo_theme')
   if (saved === 'dark') theme.value = 'dark'
-  document.addEventListener('click', () => (langOpen.value = false))
+  document.addEventListener('click', closeLang)
 })
 onBeforeUnmount(() => {
-  document.removeEventListener('click', () => (langOpen.value = false))
+  document.removeEventListener('click', closeLang)
 })
 </script>

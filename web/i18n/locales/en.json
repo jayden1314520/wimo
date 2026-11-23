@@ -1,11 +1,9 @@
 {
   "brand": {
-    "name": "WIMO",
+    "name": "VIVID",
     "slogan": "Redefining e-commerce visual production with AI"
   },
   "nav": {
-    "singleTask": "Single",
-    "batchTask": "Batch",
     "login": "Sign in",
     "language": "Language",
     "theme": "Appearance",
@@ -121,8 +119,8 @@
       "high": "High"
     },
     "model": {
-      "wimo2": "Wimo Image 2",
-      "wimo2pro": "Wimo Image 2 Pro"
+      "wimo2": "VIVID Image 2",
+      "wimo2pro": "VIVID Image 2 Pro"
     },
     "pageStyle": {
       "minimal": "Minimal",
@@ -184,8 +182,8 @@
     "comingSoon": "Coming soon"
   },
   "seo": {
-    "title": "Product Set · WIMO",
+    "title": "Product Set · VIVID",
     "description": "Upload one product photo and let AI generate white-background hero shots, selling-point images, lifestyle scenes, A+ banners and promo creatives for Taobao, JD and Douyin.",
-    "keywords": "AI product photography, product set, white background, e-commerce creative, WIMO"
+    "keywords": "AI product photography, product set, white background, e-commerce creative, VIVID"
   }
 }

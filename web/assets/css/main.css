@@ -1,5 +1,5 @@
 /* ============================================================
-   WIMO · 设计令牌
+   映物 VIVID · 设计令牌
    ============================================================ */
 :root {
   --c-bg: #ffffff;
@@ -66,17 +66,7 @@ ul { list-style: none; }
 .logo { display: flex; align-items: center; gap: 7px; }
 .logo__text { font-size: 15px; font-weight: 600; letter-spacing: .2px; }
 
-.seg {
-  display: flex; align-items: center; gap: 2px;
-  background: var(--c-fill); border-radius: 999px; padding: 3px;
-}
-.seg__btn {
-  height: 26px; padding: 0 14px; border-radius: 999px;
-  font-size: 12.5px; color: var(--c-text-2); transition: .18s;
-}
-.seg__btn:hover { color: var(--c-text); }
-.seg__btn.is-active { background: var(--c-black); color: var(--c-invert-fg); }
-
+/* 顶栏仅保留品牌标识，单任务/批量任务切换已移除 */
 .topbar__right { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
   width: 32px; height: 32px; border-radius: 50%;
