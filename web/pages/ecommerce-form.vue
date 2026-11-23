@@ -1,5 +1,5 @@
 <template>
-  <AppSidebar :active="active" @select="onSelect" />
+  <AppSidebar :active="active" />
 
   <div class="main">
     <template v-if="isVideo">
@@ -33,24 +33,14 @@
 const { t, locale } = useI18n()
 
 const VIDEO_KEYS = ['productVideo', 'salesVideo']
-const active = ref('productSet')
-const recordsOpen = ref(false)
+
+/* 功能选择由 URL query 驱动（?task=xxx），侧栏是真实路由链接 */
+const route = useRoute()
+const active = computed(() => (route.query.task as string) || 'productSet')
 
 const isVideo = computed(() => VIDEO_KEYS.includes(active.value))
 
-/* 侧栏切换：同步 URL query，刷新/分享可还原功能选择 */
-const router = useRouter()
-const route = useRoute()
-
-onMounted(() => {
-  const q = route.query.task as string
-  if (q) active.value = q
-})
-
-function onSelect(key: string) {
-  active.value = key
-  router.replace({ query: { ...route.query, task: key } })
-}
+const recordsOpen = ref(false)
 
 /* ---------------- SEO ---------------- */
 const requestURL = useRequestURL()
