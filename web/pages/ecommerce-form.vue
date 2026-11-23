@@ -73,7 +73,7 @@ const base = useRuntimeConfig().app.baseURL || '/'
 const previewUrl = (key: string) => `${base}images/preview/${key}.jpg`
 
 const sample = () => [
-  'hero', 'shoe1', 'shoe2', 'shoe3', 'shoe4', 'shoe5', 'shoe6'
+  'hero', 'shoe1', 'shoe2', 'pair1', 'pair2'
 ].map(previewUrl)
 
 const generating = ref(false)

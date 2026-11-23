@@ -7,33 +7,29 @@
       </button>
     </div>
 
-    <div class="preview-card">
-      <div class="preview-card__head">
-        <span class="preview-card__title">{{ t('preview.title') }}</span>
-        <span v-if="generating" class="badge">{{ t('preview.generating', { n: progress }) }}</span>
-        <span v-else-if="!hasResult" class="badge">{{ t('preview.placeholderBadge') }}</span>
-        <span v-else class="badge">{{ t('records.count', { n: items.length }) }}</span>
-      </div>
-
-      <!-- 生成中骨架 -->
-      <div v-if="generating" class="preview-grid">
-        <div
-          v-for="n in 8" :key="n"
-          class="preview-grid__item skeleton"
-          :class="{ 'preview-grid__item--hero': n === 1 }"
-          :style="n > progress ? 'opacity:.45' : ''"
-        ></div>
-      </div>
-
-      <!-- 结果 / 示例 -->
-      <div v-else class="preview-grid">
-        <div
-          v-for="(src, i) in items" :key="i"
-          class="preview-grid__item"
-          :class="{ 'preview-grid__item--hero': i === 0 }"
-        >
-          <img :src="src" :alt="`preview-${i + 1}`" loading="lazy" />
+    <div class="preview-workspace">
+      <!-- 生成中：骨架网格 -->
+      <div v-if="generating" class="preview-hero">
+        <div class="preview-hero__title">Maison Talon</div>
+        <div class="preview-grid">
+          <div
+            v-for="n in 5" :key="n"
+            class="preview-grid__item skeleton"
+            :class="{ 'preview-grid__item--hero': n === 1 }"
+            :style="n > progress ? 'opacity:.4' : ''"
+          ></div>
         </div>
+        <div class="gen-badge">{{ t('preview.generating', { n: progress }) }}</div>
+      </div>
+
+      <!-- 默认 / 完成：原站风格的成品封面图 -->
+      <div v-else class="preview-hero">
+        <img
+          class="preview-hero__img"
+          :src="coverSrc"
+          alt="Maison Talon 套图效果"
+        />
+        <div v-if="hasResult" class="gen-badge gen-badge--done">✓ {{ t('records.count', { n: items.length }) }}</div>
       </div>
     </div>
   </section>
@@ -48,4 +44,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ records: [] }>()
 const { t } = useI18n()
+
+const base = useRuntimeConfig().app.baseURL || '/'
+const coverSrc = `${base}images/preview/template-cover.jpg`
 </script>

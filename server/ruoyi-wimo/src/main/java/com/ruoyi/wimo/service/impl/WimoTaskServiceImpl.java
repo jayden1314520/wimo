@@ -20,7 +20,7 @@ import com.ruoyi.wimo.service.IWimoTaskService;
 public class WimoTaskServiceImpl implements IWimoTaskService
 {
     /** 结果集标识（与前端 public/images/preview 下的示例图对应） */
-    private static final String DEFAULT_RESULTS = "hero,shoe1,shoe2,shoe3,shoe4,shoe5,shoe6";
+    private static final String DEFAULT_RESULTS = "hero,shoe1,shoe2,pair1,pair2";
 
     /** 每张图模拟耗时（毫秒） */
     private static final long STEP_MS = 350L;
