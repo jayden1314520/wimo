@@ -15,8 +15,9 @@
         <span class="hint">{{ t('form.uploadLimit') }}</span>
       </div>
       <div class="uploader">
-        <div v-for="(src, i) in images" :key="i" class="upload-box">
-          <img :src="src" :alt="`asset-${i + 1}`" />
+        <div v-for="(asset, i) in images" :key="i" class="upload-box">
+          <img :src="asset.preview" :alt="`asset-${i + 1}`" />
+          <span v-if="asset.uploading" class="upload-box__loading"></span>
           <button type="button" class="upload-box__del" @click="images.splice(i, 1)">✕</button>
         </div>
         <button
@@ -109,8 +110,15 @@
 const props = defineProps<{ generating: boolean }>()
 const emit = defineEmits<{ submit: [payload: any] }>()
 const { t } = useI18n()
+const api = useWimoApi()
 
-const images = ref<string[]>([])
+interface Asset {
+  preview: string
+  url: string
+  uploading: boolean
+}
+
+const images = ref<Asset[]>([])
 const text = ref('')
 const writing = ref(false)
 const resultMode = ref<'default' | 'custom'>('default')
@@ -163,14 +171,37 @@ function pickFile() {
   fileInput.value?.click()
 }
 
-function onFile(e: Event) {
-  const files = Array.from((e.target as HTMLInputElement).files || [])
-  files.slice(0, 6 - images.value.length).forEach(file => {
+function readAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => images.value.push(reader.result as string)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
     reader.readAsDataURL(file)
   })
-  ;(e.target as HTMLInputElement).value = ''
+}
+
+async function onFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || []).slice(0, 6 - images.value.length)
+  input.value = ''
+
+  for (const file of files) {
+    const asset = reactive<Asset>({
+      preview: await readAsDataURL(file),
+      url: '',
+      uploading: true
+    })
+    images.value.push(asset)
+    try {
+      const res = await api.upload(file)
+      asset.url = res.url
+    } catch {
+      // 后端未启动时降级：直接把 dataURL 作为素材标识，保证演示可继续
+      asset.url = asset.preview
+    } finally {
+      asset.uploading = false
+    }
+  }
 }
 
 async function aiWrite() {
@@ -189,7 +220,7 @@ function reset() {
 function submit() {
   if (!canSubmit.value || props.generating) return
   emit('submit', {
-    images: [...images.value],
+    images: images.value.map(a => a.url || a.preview),
     text: text.value,
     ...model,
     resultMode: resultMode.value

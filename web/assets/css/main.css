@@ -384,3 +384,17 @@ ul { list-style: none; }
 :root[data-theme="dark"] .preview-grid__item { background: #202025; }
 :root[data-theme="dark"] .ai-btn { background: #202025; border-color: #2e2e35; }
 :root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3a3a42; }
+
+/* 上传中遮罩 */
+.upload-box__loading {
+  position: absolute; inset: 0;
+  background: rgba(255, 255, 255, .62);
+  display: flex; align-items: center; justify-content: center;
+}
+.upload-box__loading::after {
+  content: '';
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #ccd6e4; border-top-color: #18181b;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

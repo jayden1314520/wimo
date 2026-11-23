@@ -36,12 +36,18 @@ export default defineNuxtConfig({
     bundle: { optimizeTranslationDirective: false }
   },
 
-  nitro: { compressPublicAssets: true },
+  nitro: {
+    compressPublicAssets: true,
+    // 开发环境把 /prod-api 代理到若依后端，规避跨域
+    devProxy: {
+      '/prod-api': { target: 'http://localhost:8080', changeOrigin: true }
+    }
+  },
 
   runtimeConfig: {
     public: {
-      // 若依后端地址，联调时由 .env 覆盖
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+      // 生产环境用 NUXT_PUBLIC_API_BASE 覆盖成后端域名，如 https://api.wimo.com
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/prod-api'
     }
   }
 })

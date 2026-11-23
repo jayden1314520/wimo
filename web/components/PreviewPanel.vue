@@ -10,8 +10,8 @@
     <div class="preview-card">
       <div class="preview-card__head">
         <span class="preview-card__title">{{ t('preview.title') }}</span>
-        <span v-if="!hasResult" class="badge">{{ t('preview.placeholderBadge') }}</span>
-        <span v-else-if="generating" class="badge">{{ t('preview.generating', { n: progress }) }}</span>
+        <span v-if="generating" class="badge">{{ t('preview.generating', { n: progress }) }}</span>
+        <span v-else-if="!hasResult" class="badge">{{ t('preview.placeholderBadge') }}</span>
         <span v-else class="badge">{{ t('records.count', { n: items.length }) }}</span>
       </div>
 
