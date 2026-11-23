@@ -1,12 +1,14 @@
 <template>
   <header class="topbar">
-    <div class="topbar__left">
+    <div class="topbar__left" @click.capture="onLogoClick">
       <NuxtLink :to="localePath('/ecommerce-form')" class="logo">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
           <path d="M12 1.6l2.35 6.75 7.05 2.05-7.05 2.05L12 19.2l-2.35-6.75L2.6 10.4l7.05-2.05L12 1.6z" />
           <circle cx="19.4" cy="19.2" r="2.7" />
         </svg>
         <span class="logo__text">{{ t('brand.name') }}</span>
+        <!-- 移动端提示：点 logo 打开左侧菜单 -->
+        <AppIcon name="menu" :size="16" class="logo__menu-hint" />
       </NuxtLink>
     </div>
 
@@ -32,16 +34,40 @@
         <AppIcon name="monitor" :size="18" />
       </button>
 
-      <button class="login-btn">{{ t('nav.login') }}</button>
+      <!-- 未登录：登录 / 注册入口 -->
+      <button v-if="!user" class="login-btn" @click="openAuth">{{ t('nav.login') }}</button>
+
+      <!-- 已登录：账号胶囊 + 下拉 -->
+      <div v-else class="account">
+        <button class="account__chip" @click.stop="accountOpen = !accountOpen">
+          <span class="account__avatar">{{ user.email.charAt(0).toUpperCase() }}</span>
+          <span class="account__mail">{{ user.email }}</span>
+          <AppIcon name="chevron-down" :size="13" />
+        </button>
+        <div v-if="accountOpen" class="account__menu" @click.stop>
+          <div class="account__menu-mail">{{ user.email }}</div>
+          <button class="account__menu-item" @click="doSignOut">
+            <AppIcon name="close" :size="14" />
+            {{ t('auth.signout') }}
+          </button>
+        </div>
+      </div>
     </div>
   </header>
+
+  <!-- 全局轻提示 -->
+  <Transition name="toast">
+    <div v-if="toast" class="toast">{{ toast }}</div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
 const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
+const { user, openAuth, openNav, restore, signOut, showToast, toast } = useAuth()
 
 const langOpen = ref(false)
+const accountOpen = ref(false)
 const localeList = computed(() =>
   (locales.value as any[]).map(l => ({ code: l.code, name: l.name }))
 )
@@ -49,6 +75,20 @@ const localeList = computed(() =>
 async function chooseLocale(code: string) {
   langOpen.value = false
   await setLocale(code as 'zh' | 'en')
+}
+
+/* 移动端点击 logo 打开左侧菜单抽屉；PC 端保持返回首页的链接 */
+function onLogoClick(e: MouseEvent) {
+  if (import.meta.client && window.matchMedia('(max-width: 860px)').matches) {
+    e.preventDefault()
+    openNav()
+  }
+}
+
+function doSignOut() {
+  accountOpen.value = false
+  signOut()
+  showToast(t('auth.signedOut'))
 }
 
 /* 外观模式：light / dark，存 localStorage */
@@ -60,16 +100,18 @@ function toggleTheme() {
   if (import.meta.client) localStorage.setItem('wimo_theme', theme.value)
 }
 
-function closeLang() {
+function closePopovers() {
   langOpen.value = false
+  accountOpen.value = false
 }
 
 onMounted(() => {
   const saved = localStorage.getItem('wimo_theme')
   if (saved === 'dark') theme.value = 'dark'
-  document.addEventListener('click', closeLang)
+  restore()
+  document.addEventListener('click', closePopovers)
 })
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeLang)
+  document.removeEventListener('click', closePopovers)
 })
 </script>

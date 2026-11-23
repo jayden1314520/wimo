@@ -39,7 +39,13 @@ const ICONS: Record<string, string[]> = {
   check: ['M4 12l5 5L20 6'],
   'chevron-down': ['M6 9l6 6 6-6'],
   minus: ['M5 12h14'],
-  play: ['M8 5l11 7-11 7z']
+  play: ['M8 5l11 7-11 7z'],
+  menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
+  eye: ['M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
+  'eye-off': ['M3 3l18 18', 'M10.6 6.2A9.9 9.9 0 0112 6c6.4 0 10 6 10 6a17 17 0 01-3.1 3.6', 'M6.3 6.3C3.6 8 2 12 2 12s3.6 6 10 6a9.7 9.7 0 004.1-.9', 'M9.9 9.9a3 3 0 004.2 4.2'],
+  mail: ['M3 5h18v14H3z', 'M3 6l9 7 9-7'],
+  lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 018 0v4'],
+  shield: ['M12 2l8 3v6c0 5-3.4 8.4-8 11-4.6-2.6-8-6-8-11V5z', 'M9 12l2 2 4-4']
 }
 
 const paths = computed(() => ICONS[props.name] || ICONS.grid)
