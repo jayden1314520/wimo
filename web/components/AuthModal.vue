@@ -29,7 +29,7 @@
             </div>
 
             <!-- 登录 / 注册 Tab -->
-            <div class="auth-tabs" role="tablist">
+            <div v-if="mode !== 'forgot'" class="auth-tabs" role="tablist">
               <button
                 type="button" role="tab" class="auth-tabs__item"
                 :class="{ 'is-active': mode === 'login' }" :aria-selected="mode === 'login'"
@@ -41,8 +41,8 @@
                 @click="switchMode('register')"
               >{{ t('auth.tabRegister') }}</button>
             </div>
-            <h2 class="auth-card__title">{{ t(mode === 'login' ? 'auth.loginTitle' : 'auth.registerTitle') }}</h2>
-            <p class="auth-card__sub">{{ t(mode === 'login' ? 'auth.loginSub' : 'auth.registerSub') }}</p>
+            <h2 class="auth-card__title">{{ t(titleKey) }}</h2>
+            <p class="auth-card__sub">{{ t(subKey) }}</p>
           </div>
 
           <form class="auth-form" novalidate @submit.prevent="submit">
@@ -90,7 +90,7 @@
                 <label class="auth-field__label" for="auth-pwd">{{ t('auth.password') }}</label>
                 <button
                   v-if="mode === 'login'" type="button" class="auth-link auth-link--forgot"
-                  @click="showToast(t('auth.forgotTip'))"
+                  @click="switchMode('forgot')"
                 >{{ t('auth.forgotPwd') }}</button>
               </div>
               <div class="auth-input">
@@ -146,15 +146,22 @@
             </div>
 
             <button type="submit" class="auth-submit" :disabled="submitting">
-              {{ submitting ? t('auth.submitting') : t(mode === 'login' ? 'auth.loginSubmit' : 'auth.registerSubmit') }}
+              {{ submitting ? t('auth.submitting') : t(submitKey) }}
             </button>
 
             <!-- 底部模式切换 -->
             <p class="auth-foot">
-              {{ t(mode === 'login' ? 'auth.noAccount' : 'auth.hasAccount') }}
-              <button type="button" class="auth-link" @click="switchMode(mode === 'login' ? 'register' : 'login')">
-                {{ t(mode === 'login' ? 'auth.toRegister' : 'auth.toLogin') }}
-              </button>
+              <template v-if="mode === 'forgot'">
+                <button type="button" class="auth-link" @click="switchMode('login')">
+                  {{ t('auth.backToLogin') }}
+                </button>
+              </template>
+              <template v-else>
+                {{ t(mode === 'login' ? 'auth.noAccount' : 'auth.hasAccount') }}
+                <button type="button" class="auth-link" @click="switchMode(mode === 'login' ? 'register' : 'login')">
+                  {{ t(mode === 'login' ? 'auth.toRegister' : 'auth.toLogin') }}
+                </button>
+              </template>
             </p>
           </form>
         </template>
@@ -165,9 +172,13 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-const { authOpen, closeAuth, signIn, showToast, registerAccount, verifyPassword, hasAccount } = useAuth()
+const {
+  authOpen, closeAuth, showToast,
+  sendCode: apiSendCode, register: apiRegister,
+  loginPassword, loginCode, resetPassword
+} = useAuth()
 
-type Mode = 'login' | 'register'
+type Mode = 'login' | 'register' | 'forgot'
 type LoginWay = 'password' | 'code'
 
 const mode = ref<Mode>('login')
@@ -187,8 +198,11 @@ let tickTimer: ReturnType<typeof setInterval> | null = null
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /* 字段显隐：注册＝验证码+密码+确认密码；登录按所选方式二选一 */
-const showCode = computed(() => mode.value === 'register' || (mode.value === 'login' && loginWay.value === 'code'))
-const showPassword = computed(() => mode.value === 'register' || (mode.value === 'login' && loginWay.value === 'password'))
+const showCode = computed(() => mode.value === 'register' || mode.value === 'forgot' || (mode.value === 'login' && loginWay.value === 'code'))
+const showPassword = computed(() => mode.value === 'register' || mode.value === 'forgot' || (mode.value === 'login' && loginWay.value === 'password'))
+const titleKey = computed(() => mode.value === 'login' ? 'auth.loginTitle' : mode.value === 'register' ? 'auth.registerTitle' : 'auth.forgotTitle')
+const subKey = computed(() => mode.value === 'login' ? 'auth.loginSub' : mode.value === 'register' ? 'auth.registerSub' : 'auth.forgotSub')
+const submitKey = computed(() => mode.value === 'login' ? 'auth.loginSubmit' : mode.value === 'register' ? 'auth.registerSubmit' : 'auth.forgotSubmit')
 
 const legalParas = computed(() => {
   const raw = t(legalView.value === 'terms' ? 'auth.termsBody' : 'auth.privacyBody')
@@ -238,25 +252,30 @@ function reset() {
   loginWay.value = 'password'
 }
 
-/** 发送验证码：静态演示环境不接邮件服务，生成 6 位演示码并倒计时 */
-function sendCode() {
+/** 发送验证码：优先走后端（mock 通道返回演示码）；后端不可达时降级本地演示码 */
+async function sendCode() {
   clearError('email'); clearError('code')
   if (!EMAIL_RE.test(form.email)) {
     errors.email = t('auth.errEmailInvalid')
     return
   }
   sending.value = true
-  setTimeout(() => {
-    sending.value = false
-    demoCode.value = String(Math.floor(100000 + Math.random() * 900000))
-    countdown.value = 60
+  try {
+    const scene = mode.value === 'register' ? 'register' : mode.value === 'forgot' ? 'reset' : 'login'
+    const r = await apiSendCode(form.email, scene)
+    demoCode.value = r.demoCode
+    countdown.value = Math.min(60, r.expiresIn || 300)
     showToast(t('auth.codeSent'))
     if (tickTimer) clearInterval(tickTimer)
     tickTimer = setInterval(() => {
       countdown.value--
       if (countdown.value <= 0 && tickTimer) { clearInterval(tickTimer); tickTimer = null }
     }, 1000)
-  }, 400)
+  } catch (e: any) {
+    errors.email = e?.message || t('auth.errCodeSend')
+  } finally {
+    sending.value = false
+  }
 }
 
 function checkCode(): boolean {
@@ -278,6 +297,10 @@ function validate(): boolean {
     if (!form.confirm) errors.confirm = t('auth.errConfirmEmpty')
     else if (form.confirm !== form.password) errors.confirm = t('auth.errConfirmMismatch')
     if (!form.agree) errors.agree = t('auth.errAgree')
+  } else if (mode.value === 'forgot') {
+    checkCode()
+    if (!form.password) errors.password = t('auth.errPwdEmpty')
+    else if (form.password.length < 6) errors.password = t('auth.errPwdShort')
   } else if (loginWay.value === 'password') {
     if (!form.password) errors.password = t('auth.errPwdEmpty')
   } else {
@@ -286,36 +309,40 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
-function submit() {
+/** 提交：走真实后端账号接口；业务错误回填到对应字段，网络不可达时由 useAuth 自动降级 */
+async function submit() {
   if (!validate()) return
   submitting.value = true
-  setTimeout(() => {
-    submitting.value = false
+  try {
     const email = form.email
-
     if (mode.value === 'register') {
-      const ok = registerAccount(email, form.password)
-      if (!ok) { errors.email = t('auth.errEmailTaken'); return }
-      signIn(email)
+      await apiRegister({
+        email, code: form.code, password: form.password,
+        confirmPassword: form.confirm, agreed: form.agree
+      })
       closeAuth()
       showToast(t('auth.registerSuccess'))
       reset()
-      return
+    } else if (mode.value === 'forgot') {
+      await resetPassword(email, form.code, form.password)
+      showToast(t('auth.resetSuccess'))
+      switchMode('login')
+    } else {
+      if (loginWay.value === 'password') await loginPassword(email, form.password)
+      else await loginCode(email, form.code)
+      closeAuth()
+      showToast(t('auth.loginSuccess'))
+      reset()
     }
-
-    // 登录：先确认账号已注册；密码登录再校验密码
-    if (!hasAccount(email)) { errors.email = t('auth.errNotRegistered'); return }
-    if (loginWay.value === 'password') {
-      if (verifyPassword(email, form.password) === 'wrong') {
-        errors.password = t('auth.errWrongPwd')
-        return
-      }
-    }
-    signIn(email)
-    closeAuth()
-    showToast(t('auth.loginSuccess'))
-    reset()
-  }, 600)
+  } catch (e: any) {
+    const msg = e?.message || '操作失败'
+    if (msg.includes('验证码')) errors.code = msg
+    else if (msg.includes('密码')) errors.password = msg
+    else if (msg.includes('协议')) errors.agree = msg
+    else errors.email = msg
+  } finally {
+    submitting.value = false
+  }
 }
 
 function onKey(e: KeyboardEvent) {

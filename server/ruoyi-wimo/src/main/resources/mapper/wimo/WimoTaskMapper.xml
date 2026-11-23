@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.wimo.mapper.WimoTaskMapper">
 
     <resultMap type="com.ruoyi.wimo.domain.WimoTask" id="WimoTaskResult">
         <id     property="taskId"        column="task_id"       />
         <result property="userId"        column="user_id"       />
         <result property="taskType"      column="task_type"     />
+        <result property="title"         column="title"         />
         <result property="productName"   column="product_name"  />
         <result property="sellingPoints" column="selling_points"/>
         <result property="ratio"         column="ratio"         />
@@ -19,31 +18,36 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="model"         column="model"         />
         <result property="resultMode"    column="result_mode"   />
         <result property="images"        column="images"        />
+        <result property="payload"       column="payload"       />
         <result property="status"        column="status"        />
         <result property="progress"      column="progress"      />
         <result property="results"       column="results"       />
         <result property="extra"         column="extra"         />
+        <result property="resultCount"   column="result_count"  />
+        <result property="retryCount"    column="retry_count"   />
+        <result property="costMs"        column="cost_ms"       />
         <result property="errorMsg"      column="error_msg"     />
+        <result property="finishTime"    column="finish_time"   />
         <result property="createTime"    column="create_time"   />
         <result property="updateTime"    column="update_time"   />
     </resultMap>
 
     <sql id="selectTaskVo">
-        select task_id, user_id, task_type, product_name, selling_points, ratio, platform, region, lang,
-               resolution, quality, model, result_mode, images, status, progress, results, extra,
-               error_msg, create_time, update_time
+        select task_id, user_id, task_type, title, product_name, selling_points, ratio, platform, region,
+               lang, resolution, quality, model, result_mode, images, payload, status, progress, results,
+               extra, result_count, retry_count, cost_ms, error_msg, finish_time, create_time, update_time
         from wimo_task
     </sql>
 
     <insert id="insertTask" parameterType="com.ruoyi.wimo.domain.WimoTask" useGeneratedKeys="true" keyProperty="taskId">
         insert into wimo_task (
-            user_id, task_type, product_name, selling_points, ratio, platform, region, lang,
-            resolution, quality, model, result_mode, images, status, progress,
-            extra, error_msg, create_time, update_time
+            user_id, task_type, title, product_name, selling_points, ratio, platform, region, lang,
+            resolution, quality, model, result_mode, images, payload, status, progress,
+            results, extra, result_count, retry_count, cost_ms, error_msg, create_time, update_time
         ) values (
-            #{userId}, #{taskType}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
-            #{resolution}, #{quality}, #{model}, #{resultMode}, #{images}, #{status}, #{progress},
-            #{extra}, #{errorMsg}, #{createTime}, #{updateTime}
+            #{userId}, #{taskType}, #{title}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
+            #{resolution}, #{quality}, #{model}, #{resultMode}, #{images}, #{payload}, #{status}, #{progress},
+            #{results}, #{extra}, #{resultCount}, #{retryCount}, #{costMs}, #{errorMsg}, #{createTime}, #{updateTime}
         )
     </insert>
 
@@ -54,32 +58,72 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="progress != null">progress = #{progress},</if>
             <if test="results != null">results = #{results},</if>
             <if test="errorMsg != null">error_msg = #{errorMsg},</if>
-            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="resultCount != null">result_count = #{resultCount},</if>
+            <if test="retryCount != null">retry_count = #{retryCount},</if>
+            <if test="costMs != null">cost_ms = #{costMs},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            update_time = #{updateTime}
         </set>
         where task_id = #{taskId}
     </update>
 
     <select id="selectTaskById" parameterType="java.lang.Long" resultMap="WimoTaskResult">
-        <include refid="selectTaskVo"/>
-        where task_id = #{taskId}
+        <include refid="selectTaskVo"/> where task_id = #{taskId}
     </select>
 
     <select id="selectTaskList" parameterType="com.ruoyi.wimo.domain.WimoTask" resultMap="WimoTaskResult">
         <include refid="selectTaskVo"/>
         <where>
             <if test="status != null and status != ''">and status = #{status}</if>
-            <if test="productName != null and productName != ''">and product_name like concat('%', #{productName}, '%')</if>
-            <if test="platform != null and platform != ''">and platform = #{platform}</if>
+            <if test="taskType != null and taskType != ''">and task_type = #{taskType}</if>
             <if test="userId != null">and user_id = #{userId}</if>
+            <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+            <if test="productName != null and productName != ''">and product_name like concat('%', #{productName}, '%')</if>
         </where>
         order by task_id desc
     </select>
 
+    <select id="selectMyTasks" resultMap="WimoTaskResult">
+        <include refid="selectTaskVo"/>
+        where user_id = #{userId}
+        <if test="status != null and status != ''">and status = #{status}</if>
+        order by task_id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countMyTasks" resultType="java.lang.Integer">
+        select count(*) from wimo_task where user_id = #{userId}
+        <if test="status != null and status != ''">and status = #{status}</if>
+    </select>
+
     <delete id="deleteTaskByIds" parameterType="java.lang.Long">
         delete from wimo_task where task_id in
-        <foreach collection="array" item="taskId" open="(" separator="," close=")">
-            #{taskId}
-        </foreach>
+        <foreach collection="array" item="taskId" open="(" separator="," close=")">#{taskId}</foreach>
     </delete>
+
+    <select id="countByStatus" resultType="java.util.LinkedHashMap">
+        select status, count(*) as cnt from wimo_task group by status order by status
+    </select>
+
+    <select id="countByType" resultType="java.util.LinkedHashMap">
+        select task_type, count(*) as cnt from wimo_task group by task_type order by cnt desc
+    </select>
+
+    <select id="trendByDay" resultType="java.util.LinkedHashMap">
+        select date_format(create_time, '%Y-%m-%d') as d, count(*) as cnt
+        from wimo_task
+        where create_time &gt;= date_sub(curdate(), interval #{days} day)
+        group by d order by d
+    </select>
+
+    <select id="overview" resultType="java.util.LinkedHashMap">
+        select count(*) as total,
+               sum(case when status = '2' then 1 else 0 end) as done,
+               sum(case when status = '3' then 1 else 0 end) as failed,
+               sum(case when status = '1' then 1 else 0 end) as running,
+               sum(case when date(create_time) = curdate() then 1 else 0 end) as today,
+               round(avg(case when status = '2' then cost_ms else null end), 0) as avgCost
+        from wimo_task
+    </select>
 
 </mapper>

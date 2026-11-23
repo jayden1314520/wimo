@@ -61,7 +61,16 @@ useHead(() => ({
 /* ---------------- 预览数据 ---------------- */
 /* 占位示例图：拼接 baseURL，兼容 GitHub Pages 子路径部署 */
 const base = useRuntimeConfig().app.baseURL || '/'
-const previewUrl = (key: string) => `${base}images/preview/${key}.jpg`
+const apiBase = useRuntimeConfig().public.apiBase
+/** 示例图 key 走站点静态资源；后端结果 URL 走 apiBase（真实部署可指向后端域名） */
+const previewUrl = (key: string) => {
+  if (!key) return ''
+  if (/^https?:\/\//.test(key)) return key
+  if (key.startsWith('/profile/') || key.startsWith('/images/')) {
+    return apiBase.startsWith('http') ? apiBase.replace(/\/$/, '') + key : key
+  }
+  return `${base}images/preview/${key}.jpg`
+}
 
 /* 右侧示意图随左侧功能同步切换：9 张静态封面 + 3 段示例视频 */
 const preview = computed(() => {
@@ -120,6 +129,17 @@ function localMock(payload: any) {
   })
 }
 
+/* 生成设置字段：从表单 payload 顶层汇总为后端 schema 所需的 common 对象 */
+const COMMON_KEYS = [
+  'ratio', 'platform', 'region', 'language', 'resolution', 'quality', 'model',
+  'videoResolution', 'videoScene', 'cameraStyle', 'duration', 'videoModel'
+]
+
+/** 素材是否来自后端（/profile 或完整 URL）；含 dataURL 说明上传未连上后端 */
+function isBackendAsset(url: string): boolean {
+  return /^https?:\/\//.test(url) || url.startsWith('/profile/') || url.startsWith('/images/')
+}
+
 async function onSubmit(payload: any) {
   generating.value = true
   progress.value = 0
@@ -127,37 +147,44 @@ async function onSubmit(payload: any) {
   recordsOpen.value = false
 
   try {
+    const uploads: Record<string, string[]> = payload.uploads || {}
+    const localOnly = Object.values(uploads)
+      .some(list => (list || []).some(u => !isBackendAsset(String(u))))
+    if (localOnly) throw new Error('素材未上传至后端，走本地演示')
+
+    const common: Record<string, any> = {}
+    for (const k of COMMON_KEYS) {
+      if (payload[k] !== undefined && payload[k] !== '') common[k] = payload[k]
+    }
+
     const task = await api.createTask({
       taskType: payload.taskType,
-      productName: summarize(payload),
-      sellingPoints: summarize(payload),
-      ratio: payload.ratio,
-      platform: payload.platform,
-      region: payload.region,
-      lang: payload.language,
-      resolution: payload.resolution,
-      quality: payload.quality,
-      model: payload.model,
-      resultMode: payload.resultMode,
-      images: ((Object.values(payload.uploads || {})[0] as string[]) || []).join(','),
-      extra: JSON.stringify({ uploads: payload.uploads, values: payload.values })
+      title: summarize(payload),
+      uploads,
+      values: payload.values || {},
+      common,
+      resultMode: payload.resultMode || 'default'
     })
 
     const startedAt = Date.now()
-    while (Date.now() - startedAt < 60000) {
-      await new Promise(r => setTimeout(r, 350))
+    while (Date.now() - startedAt < 90000) {
+      await new Promise(r => setTimeout(r, 400))
       const rec = await api.getTask(task.taskId)
-      progress.value = rec.progress ?? 0
+      // 后端进度 0-100 → 预览骨架 0-8 格
+      progress.value = Math.min(8, Math.round((rec.progress ?? 0) / 100 * 8))
       if (rec.status === '2') {
         const keys = (rec.results || '').split(',').filter(Boolean)
         result.value = keys.length ? keys.map(previewUrl) : sample()
         break
       }
-      if (rec.status === '3') throw new Error(rec.errorMsg || 'generation failed')
+      if (rec.status === '3' || rec.status === '4') {
+        throw new Error(rec.errorMsg || 'generation failed')
+      }
     }
     if (!result.value) result.value = sample()
+    await openRecords()
   } catch {
-    // 后端未启动时降级为本地模拟，保证页面可演示
+    // 后端未启动 / 生成失败时降级为本地模拟，保证页面可演示
     for (let i = 1; i <= 8; i++) {
       await new Promise(r => setTimeout(r, 240))
       progress.value = i

@@ -19,6 +19,17 @@ web/dist/
 .vscode/
 .DS_Store
 
-# java / 若依（阶段 2 预留）
-server/target/
+# java / 若依
+target/
 *.class
+
+# 运行时上传与生成结果（不入库）
+server/uploadPath/
+web/public/result/
+
+# 构建产物
+admin/dist/
+web/.output/
+
+# docker 本地数据卷
+docker-data/

@@ -145,3 +145,35 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# ===== 映物 VIVID 业务配置 =====
+# 全部为开箱即用的本地模拟值；替换成真实服务只需改这里（或用环境变量覆盖），无需改代码。
+# 详细见根目录 docs/API.md 与 README.md。
+wimo:
+  # 邮件通道：mock = 写日志不真发信，验证码通过接口 demoCode 回显（默认）
+  #           http = POST {to,scene,code,subject,text} 到 http-endpoint
+  mail:
+    provider: mock
+    http-endpoint: ''
+    http-token: ''
+  # 生成器：mock = 复制示例封面/视频为结果文件（默认）
+  #         remote = POST 任务到模型网关，解析 {"results":["url",...]}
+  generator:
+    provider: mock
+    remote-url: ''
+    remote-token: ''
+    step-ms: 350        # 模拟生成每步耗时（毫秒），8 步约 3 秒
+    result-count: 4     # 模拟生成的结果文件数量
+  # 本地模拟使用的示例素材目录（容器部署时挂载到该路径）
+  mock:
+    sample-dir: /workspace/wimogen-platform/web/public/images/preview
+  # 存储：local = 落地 RuoYi profile/upload（默认）；remote = 对象存储网关
+  storage:
+    provider: local
+  # 账号与验证码
+  auth:
+    code-ttl: 300           # 验证码有效期（秒）
+    code-limit-seconds: 60  # 同一邮箱同一场景的发送间隔（秒）
+    token-days: 7           # 会员登录令牌有效期（天）
+    demo-code: ''           # 留空则随机生成；填写固定值便于自动化测试
+

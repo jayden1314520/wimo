@@ -1,0 +1,138 @@
+[
+  {
+    "key": "productSet", "group": "ecommerce", "nameZh": "商品套图", "nameEn": "Product Set", "icon": "grid", "sortNo": 1,
+    "uploads": [{ "key": "product", "labelKey": "product", "max": 6, "min": 1 }],
+    "fields": [{ "key": "sellingPoints", "type": "textarea", "required": true, "placeholderKey": "sellingPoints", "ai": true }],
+    "common": ["ratio", "platform", "region", "language", "resolution", "quality"],
+    "resultMode": true, "preview": { "kind": "image", "file": "cover-productSet.jpg" }
+  },
+  {
+    "key": "productDetail", "group": "ecommerce", "nameZh": "商品详情页", "nameEn": "Product Detail", "icon": "detail", "sortNo": 2,
+    "uploads": [{ "key": "product", "labelKey": "product", "max": 6, "min": 1 }],
+    "fields": [
+      { "key": "sellingPoints", "type": "textarea", "required": true, "placeholderKey": "sellingPoints", "ai": true },
+      { "key": "pageStyle", "type": "select", "options": ["minimal", "premium", "marketing", "editorial"] }
+    ],
+    "common": ["ratio", "platform", "region", "language", "resolution", "quality"],
+    "resultMode": true, "preview": { "kind": "image", "file": "cover-productDetail.jpg" }
+  },
+  {
+    "key": "hotReplica", "group": "ecommerce", "nameZh": "爆款图复刻", "nameEn": "Hot Replica", "icon": "copy", "sortNo": 3,
+    "uploads": [
+      { "key": "product", "labelKey": "product", "max": 1, "min": 1 },
+      { "key": "reference", "labelKey": "reference", "max": 1, "min": 1 }
+    ],
+    "fields": [
+      { "key": "replicaType", "type": "select", "required": true, "options": ["layout", "style", "full"] },
+      { "key": "replicaLevel", "type": "select", "required": true, "options": ["loose", "balanced", "strict"] }
+    ],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": true, "preview": { "kind": "image", "file": "cover-hotReplica.jpg" }
+  },
+  {
+    "key": "scene", "group": "ecommerce", "nameZh": "商品场景图", "nameEn": "Scene", "icon": "image", "sortNo": 4,
+    "uploads": [
+      { "key": "product", "labelKey": "product", "max": 1, "min": 1 },
+      { "key": "sceneRef", "labelKey": "sceneRef", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "count", "type": "number", "required": true }],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": true, "preview": { "kind": "image", "file": "cover-scene.jpg" }
+  },
+  {
+    "key": "retouch", "group": "ecommerce", "nameZh": "商品图精修", "nameEn": "Retouch", "icon": "retouch", "sortNo": 5,
+    "uploads": [{ "key": "product", "labelKey": "product", "max": 1, "min": 1 }],
+    "fields": [{ "key": "retouchNote", "type": "textarea", "required": true, "placeholderKey": "retouchNote" }],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-retouch.jpg" }
+  },
+  {
+    "key": "poster", "group": "ecommerce", "nameZh": "电商海报", "nameEn": "Poster", "icon": "poster", "sortNo": 6,
+    "uploads": [{ "key": "product", "labelKey": "product", "max": 1, "min": 1 }],
+    "fields": [
+      { "key": "posterTheme", "type": "textarea", "required": true, "placeholderKey": "posterTheme" },
+      { "key": "promo", "type": "textarea", "required": true, "placeholderKey": "promo" },
+      { "key": "activityStart", "type": "datetime" },
+      { "key": "activityEnd", "type": "datetime" }
+    ],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-poster.jpg" }
+  },
+  {
+    "key": "flatLay", "group": "ecommerce", "nameZh": "服饰平铺图", "nameEn": "Flat Lay", "icon": "shirt", "sortNo": 7,
+    "uploads": [
+      { "key": "apparel", "labelKey": "apparel", "max": 1, "min": 1 },
+      { "key": "sceneRef", "labelKey": "sceneRef", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "count", "type": "number", "required": true }],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-flatLay.jpg" }
+  },
+  {
+    "key": "modelTryon", "group": "model", "nameZh": "模特试衣", "nameEn": "Model Try-on", "icon": "user", "sortNo": 8,
+    "uploads": [
+      { "key": "apparel", "labelKey": "apparel", "max": 1, "min": 1 },
+      { "key": "modelRef", "labelKey": "modelRef", "max": 1, "min": 1 },
+      { "key": "sceneRef", "labelKey": "sceneRef", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "count", "type": "number", "required": true }],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-modelTryon.jpg" }
+  },
+  {
+    "key": "anythingWear", "group": "model", "nameZh": "万物穿戴", "nameEn": "Anything Wear", "icon": "wear", "sortNo": 9,
+    "uploads": [
+      { "key": "apparel", "labelKey": "apparel", "max": 1, "min": 1 },
+      { "key": "modelRef", "labelKey": "modelRef", "max": 1, "min": 1 },
+      { "key": "sceneRef", "labelKey": "sceneRef", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "count", "type": "number", "required": true }],
+    "common": ["ratio", "platform", "region", "resolution", "quality"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-anythingWear.jpg" }
+  },
+  {
+    "key": "swapModel", "group": "model", "nameZh": "AI 换模特", "nameEn": "Swap Model", "icon": "swap", "sortNo": 10,
+    "uploads": [
+      { "key": "model", "labelKey": "model", "max": 1, "min": 1 },
+      { "key": "target", "labelKey": "target", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "count", "type": "number", "required": true }],
+    "common": ["ratio", "platform", "resolution", "quality"],
+    "resultMode": false,
+    "preview": { "kind": "video", "file": "clip-swapModel.mp4", "poster": "poster-swapModel.jpg" }
+  },
+  {
+    "key": "productVideo", "group": "video", "nameZh": "商品展示短片", "nameEn": "Product Video", "icon": "video", "sortNo": 11,
+    "uploads": [{ "key": "product", "labelKey": "product", "max": 1, "min": 1 }],
+    "fields": [],
+    "common": ["ratio", "videoScene", "cameraStyle", "videoResolution", "duration", "videoModel"],
+    "resultMode": false,
+    "preview": { "kind": "video", "file": "clip-productVideo.mp4", "poster": "poster-productVideo.jpg" }
+  },
+  {
+    "key": "salesVideo", "group": "video", "nameZh": "带货视频", "nameEn": "Sales Video", "icon": "cart", "sortNo": 12,
+    "uploads": [
+      { "key": "product", "labelKey": "product", "max": 1, "min": 1 },
+      { "key": "modelRef", "labelKey": "modelRef", "max": 1, "min": 1 }
+    ],
+    "fields": [{ "key": "sellingPoints", "type": "textarea", "required": true, "placeholderKey": "sellingPoints", "ai": true }],
+    "common": ["ratio", "platform", "region", "language", "videoResolution", "duration", "videoModel"],
+    "resultMode": false,
+    "preview": { "kind": "video", "file": "clip-salesVideo.mp4", "poster": "poster-salesVideo.jpg" }
+  },
+  {
+    "key": "storeVisit", "group": "video", "nameZh": "探店视频", "nameEn": "Store Visit", "icon": "store", "sortNo": 13,
+    "uploads": [
+      { "key": "storefront", "labelKey": "storefront", "max": 1, "min": 1 },
+      { "key": "storeEnv", "labelKey": "storeEnv", "max": 6, "min": 1 },
+      { "key": "dishes", "labelKey": "dishes", "max": 8, "min": 4, "hintKey": "dishes" },
+      { "key": "blogger", "labelKey": "blogger", "max": 1, "min": 1 }
+    ],
+    "fields": [
+      { "key": "storeName", "type": "text", "optional": true, "placeholderKey": "storeName" },
+      { "key": "location", "type": "text", "optional": true, "placeholderKey": "location" }
+    ],
+    "common": ["ratio", "language", "videoResolution", "duration", "videoModel"],
+    "resultMode": false, "preview": { "kind": "image", "file": "cover-storeVisit.jpg" }
+  }
+]

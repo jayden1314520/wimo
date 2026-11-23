@@ -164,7 +164,7 @@ import { getSchema } from '~/config/tasks'
 
 const props = defineProps<{ generating: boolean; schemaKey: string }>()
 const emit = defineEmits<{ submit: [payload: any] }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useWimoApi()
 
 const schema = computed<TaskSchema>(() => getSchema(props.schemaKey))
@@ -302,8 +302,18 @@ async function onFile(key: string, e: Event) {
 
 async function aiWrite(key: string) {
   writing.value = true
-  await new Promise(r => setTimeout(r, 900))
-  values[key] = t('form.aiExample')
+  try {
+    const r = await api.aiWrite({
+      taskType: schema.value.key,
+      field: key,
+      context: String(values[key] || ''),
+      lang: locale.value
+    })
+    values[key] = r.text
+  } catch {
+    // 后端不可达时降级为内置示例文案
+    values[key] = t('form.aiExample')
+  }
   writing.value = false
 }
 

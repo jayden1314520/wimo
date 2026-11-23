@@ -1,0 +1,87 @@
+services:
+  # ---------- 基础设施 ----------
+  mysql:
+    image: mariadb:10.11
+    container_name: wimo-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: ry
+      MYSQL_USER: ruoyi
+      MYSQL_PASSWORD: ruoyi123
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"      # 若本机已装 MySQL，请先停用或改为此处宿主机端口
+    volumes:
+      - ./server/sql:/docker-entrypoint-initdb.d:ro   # 首次启动自动导入 ry + quartz + wimo 表
+      - ./docker-data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: wimo-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- Spring Boot 后端 ----------
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: wimo-server
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Asia/Shanghai
+      # 用 Spring Boot 官方支持的 JSON 属性源覆盖数据源 / Redis / 上传目录
+      SPRING_APPLICATION_JSON: >-
+        {"spring":{"datasource":{"druid":{"master":{"url":"jdbc:mysql://mysql:3306/ry?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true","username":"ruoyi","password":"ruoyi123"}}},"data":{"redis":{"host":"redis","port":6379}}},"ruoyi":{"profile":"/app/uploadPath"},"wimo":{"mock":{"sample-dir":"/app/samples"}}}
+    volumes:
+      - ./server/uploadPath:/app/uploadPath
+      - ./web/public/images/preview:/app/samples:ro
+
+  # ---------- 用户端 Nuxt 静态站（可选：--profile frontend） ----------
+  web:
+    profiles: ["frontend"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    container_name: wimo-web
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "3001:80"
+
+  # ---------- 管理端 RuoYi-Vue3（可选：--profile frontend） ----------
+  admin:
+    profiles: ["frontend"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.admin
+    container_name: wimo-admin
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8081:80"

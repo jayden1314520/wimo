@@ -22,29 +22,42 @@
         <div class="gen-badge">{{ t('preview.generating', { n: progress }) }}</div>
       </div>
 
-      <!-- 默认 / 完成：随左侧功能切换的示意图 -->
+      <!-- 默认 / 完成：有真实结果时展示结果图，否则展示功能示意图 -->
       <div v-else class="preview-hero">
-        <!-- 视频类功能：示例短片播放器 -->
-        <div v-if="preview.kind === 'video'" class="preview-video">
-          <video
-            class="preview-video__media"
-            :src="preview.src"
-            :poster="preview.poster || undefined"
-            autoplay muted loop playsinline preload="metadata"
-          ></video>
-          <span class="preview-video__tag">
-            <AppIcon name="play" :size="11" />
-            {{ t('preview.videoTag') }}
-          </span>
+        <!-- 真实生成结果（后端 /profile/result 下的文件） -->
+        <div v-if="hasResult && items.length" class="preview-grid">
+          <div
+            v-for="(src, i) in items" :key="i"
+            class="preview-grid__item"
+            :class="{ 'preview-grid__item--hero': i === 0 }"
+          >
+            <img :src="src" :alt="`result-${i + 1}`" />
+          </div>
         </div>
 
-        <!-- 图片类功能：该功能的模板封面示意图 -->
-        <img
-          v-else
-          class="preview-hero__img"
-          :src="preview.src"
-          :alt="`${preview.alt} · ${t('preview.placeholderBadge')}`"
-        />
+        <template v-else>
+          <!-- 视频类功能：示例短片播放器 -->
+          <div v-if="preview.kind === 'video'" class="preview-video">
+            <video
+              class="preview-video__media"
+              :src="preview.src"
+              :poster="preview.poster || undefined"
+              autoplay muted loop playsinline preload="metadata"
+            ></video>
+            <span class="preview-video__tag">
+              <AppIcon name="play" :size="11" />
+              {{ t('preview.videoTag') }}
+            </span>
+          </div>
+
+          <!-- 图片类功能：该功能的模板封面示意图 -->
+          <img
+            v-else
+            class="preview-hero__img"
+            :src="preview.src"
+            :alt="`${preview.alt} · ${t('preview.placeholderBadge')}`"
+          />
+        </template>
 
         <div v-if="hasResult" class="gen-badge gen-badge--done">
           ✓ {{ t('records.count', { n: items.length }) }}

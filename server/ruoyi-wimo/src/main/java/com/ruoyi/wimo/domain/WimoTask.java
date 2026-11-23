@@ -1,79 +1,76 @@
 package com.ruoyi.wimo.domain;
 
 import java.util.Date;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
- * AI 套图任务对象 wimo_task
+ * AI 生成任务对象 wimo_task
+ *
+ * <p>扁平字段保留用于列表检索与兼容旧接口，完整参数存 payload JSON，
+ * 结果文件逐条存 wimo_task_result。</p>
  *
  * @author wimo
  */
 @Data
 public class WimoTask
 {
-    /** 任务ID */
     private Long taskId;
 
-    /** 用户ID（未登录为 0） */
+    /** 会员ID（0 = 匿名演示） */
     private Long userId;
 
-    /** 任务类型（productSet/productDetail/hotReplica/scene/retouch/poster/flatLay/modelTryon/anythingWear/swapModel） */
+    /** 功能 key，对应 wimo_schema.task_key */
     private String taskType;
 
-    /** 商品名称 */
+    private String title;
+
     private String productName;
 
-    /** 卖点与要求 */
     private String sellingPoints;
 
-    /** 画面比例 */
     private String ratio;
-
-    /** 平台 */
     private String platform;
-
-    /** 国家/地区 */
     private String region;
-
-    /** 语言 */
     private String lang;
-
-    /** 清晰度 */
     private String resolution;
-
-    /** 质量 */
     private String quality;
-
-    /** 模型 */
     private String model;
-
-    /** 结果配置（default/custom） */
     private String resultMode;
 
-    /** 素材列表（逗号分隔，最多 6 个） */
+    /** 素材 URL 列表（逗号分隔） */
     private String images;
 
-    /** 状态（0待生成 1生成中 2完成 3失败） */
+    /** 完整参数 JSON（uploads/values/common） */
+    private String payload;
+
+    /** 0待生成 1生成中 2完成 3失败 4已取消 */
     private String status;
 
-    /** 进度（0-8） */
+    /** 进度 0-100 */
     private Integer progress;
 
-    /** 结果图（逗号分隔的图片标识） */
+    /** 结果 URL（逗号分隔，兼容前端 previewUrl） */
     private String results;
 
-    /** 扩展参数（JSON: uploads/values） */
+    /** 扩展参数（兼容旧字段） */
     private String extra;
 
-    /** 失败原因 */
+    private Integer resultCount;
+    private Integer retryCount;
+    private Long costMs;
     private String errorMsg;
 
-    /** 创建时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date finishTime;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
-    /** 更新时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
+
+    /** 结果文件明细（非持久化，查询详情时填充） */
+    private List<WimoTaskResult> resultFiles;
 }
