@@ -19,6 +19,7 @@ export interface FieldDef {
   key: string
   type: 'textarea' | 'number' | 'datetime' | 'select' | 'text'
   required?: boolean
+  optional?: boolean        // 选填：不显示 *、显示「选填」、不参与校验
   options?: string[]        // select 值列表（配合 optionsNs 翻译）
   optionsNs?: string        // i18n 命名空间: options.<ns>.<value>
   placeholderKey?: string   // i18n: form.ph.<key>
@@ -195,19 +196,19 @@ export const TASK_SCHEMAS: TaskSchema[] = [
     preview: { kind: 'video', file: 'clip-salesVideo.mp4', poster: 'poster-salesVideo.jpg' }
   },
   {
-    /* 视频 · 探店：门头照 + 环境照 + 菜品照(4-8) + 博主照(选填) + 店铺名/位置 + 视频配置 */
+    /* 视频 · 探店：门头照 + 环境照 + 菜品照(4-8) + 博主照(必填) + 店铺名/位置(选填) + 视频配置 */
     key: 'storeVisit',
     uploads: [
       { key: 'storefront', labelKey: 'storefront', max: 1 },
       { key: 'storeEnv', labelKey: 'storeEnv', max: 6 },
       { key: 'dishes', labelKey: 'dishes', max: 8, min: 4, hintKey: 'dishes' },
-      { key: 'blogger', labelKey: 'blogger', max: 1, optional: true }
+      { key: 'blogger', labelKey: 'blogger', max: 1 }
     ],
     fields: [
-      { key: 'storeName', type: 'text', required: true, placeholderKey: 'storeName' },
-      { key: 'location', type: 'text', required: true, placeholderKey: 'location' }
+      { key: 'storeName', type: 'text', optional: true, placeholderKey: 'storeName' },
+      { key: 'location', type: 'text', optional: true, placeholderKey: 'location' }
     ],
-    common: ['ratio', 'platform', 'region', 'language', 'videoResolution', 'duration', 'videoModel'],
+    common: ['ratio', 'language', 'videoResolution', 'duration', 'videoModel'],
     resultMode: false,
     preview: { kind: 'image', file: 'cover-storeVisit.jpg' }
   }

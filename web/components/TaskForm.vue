@@ -48,6 +48,7 @@
     >
       <div class="field__label">
         {{ t(`form.field.${f.key}`) }}<span v-if="f.required" class="req">*</span>
+        <span v-else-if="f.optional" class="optional">{{ t('form.uploadOptional') }}</span>
       </div>
 
       <div v-if="f.type === 'textarea'" class="textarea-wrap">
