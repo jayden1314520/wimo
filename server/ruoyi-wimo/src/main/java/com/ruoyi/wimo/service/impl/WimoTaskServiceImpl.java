@@ -7,84 +7,31 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.wimo.domain.WimoTask;
 import com.ruoyi.wimo.domain.dto.WimoTaskSubmit;
 import com.ruoyi.wimo.exception.WimoException;
 import com.ruoyi.wimo.mapper.WimoTaskMapper;
 import com.ruoyi.wimo.mapper.WimoTaskResultMapper;
 import com.ruoyi.wimo.service.IWimoTaskService;
+import com.ruoyi.wimo.service.WimoDiamondService;
 import com.ruoyi.wimo.service.WimoGenerateWorker;
-import com.ruoyi.wimo.service.WimoSchemaService;
+import com.ruoyi.wimo.service.WimoWorkflowEngine;
 
-/** 生成任务 Service 实现 */
+/** 生成任务 Service 实现：创建统一交给工作流引擎，此处负责查询与生命周期操作 */
 @Service
 public class WimoTaskServiceImpl implements IWimoTaskService
 {
-    @Autowired
-    private WimoTaskMapper taskMapper;
-
-    @Autowired
-    private WimoTaskResultMapper resultMapper;
-
-    @Autowired
-    private WimoSchemaService schemaService;
-
-    @Autowired
-    private WimoGenerateWorker worker;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private WimoTaskMapper taskMapper;
+    @Autowired private WimoTaskResultMapper resultMapper;
+    @Autowired private WimoWorkflowEngine workflowEngine;
+    @Autowired private WimoGenerateWorker worker;
+    @Autowired private WimoDiamondService diamondService;
 
     @Override
     public WimoTask createTask(WimoTaskSubmit submit, Long userId)
     {
-        // 后端按模板校验（不信任前端的必填判断）
-        schemaService.validate(submit.getTaskType(), submit);
-
-        Map<String, Object> c = submit.getCommon() == null ? Map.of() : submit.getCommon();
-        Map<String, Object> v = submit.getValues() == null ? Map.of() : submit.getValues();
-        Map<String, List<String>> up = submit.getUploads() == null ? Map.of() : submit.getUploads();
-
-        List<String> allFiles = new ArrayList<>();
-        up.values().forEach(list -> { if (list != null) allFiles.addAll(list); });
-
-        WimoTask t = new WimoTask();
-        t.setUserId(userId == null ? 0L : userId);
-        t.setTaskType(submit.getTaskType());
-        t.setTitle(str(submit.getTitle()));
-        t.setProductName(!str(v.get("storeName")).isEmpty() ? str(v.get("storeName")) : str(submit.getTitle()));
-        t.setSellingPoints(str(v.get("sellingPoints")));
-        t.setRatio(str(c.get("ratio")));
-        t.setPlatform(str(c.get("platform")));
-        t.setRegion(str(c.get("region")));
-        t.setLang(str(c.get("language")));
-        t.setResolution(!str(c.get("resolution")).isEmpty() ? str(c.get("resolution")) : str(c.get("videoResolution")));
-        t.setQuality(str(c.get("quality")));
-        t.setModel(!str(c.get("model")).isEmpty() ? str(c.get("model")) : str(c.get("videoModel")));
-        t.setResultMode(str(submit.getResultMode()).isEmpty() ? "default" : submit.getResultMode());
-        t.setImages(String.join(",", allFiles));
-        t.setExtra(submit.getExtra());
-        t.setStatus("0");
-        t.setProgress(0);
-        t.setResults("");
-        t.setResultCount(0);
-        t.setRetryCount(0);
-        t.setCostMs(0L);
-        t.setErrorMsg("");
-        t.setCreateTime(new Date());
-        t.setUpdateTime(t.getCreateTime());
-        try
-        {
-            t.setPayload(objectMapper.writeValueAsString(submit));
-        }
-        catch (Exception e)
-        {
-            throw new WimoException("任务参数序列化失败");
-        }
-        taskMapper.insertTask(t);
-        worker.submit(t.getTaskId());
-        return t;
+        // 统一入口：模板校验 → 智能体 → 计价 → 预扣 → 落库 → 异步执行
+        return workflowEngine.create(submit, userId);
     }
 
     @Override
@@ -97,10 +44,7 @@ public class WimoTaskServiceImpl implements IWimoTaskService
     public WimoTask getTaskDetail(Long taskId)
     {
         WimoTask t = getTask(taskId);
-        if (t != null)
-        {
-            t.setResultFiles(resultMapper.selectByTaskId(taskId));
-        }
+        if (t != null) t.setResultFiles(resultMapper.selectByTaskId(taskId));
         return t;
     }
 
@@ -137,9 +81,12 @@ public class WimoTaskServiceImpl implements IWimoTaskService
     @Override
     public int deleteTasks(Long[] taskIds)
     {
-        if (taskIds == null || taskIds.length == 0)
+        if (taskIds == null || taskIds.length == 0) return 0;
+        // 删除仍在冻结中的任务时先退还钻石，避免「钱冻着、任务没了」
+        for (Long id : taskIds)
         {
-            return 0;
+            WimoTask t = taskMapper.selectTaskById(id);
+            if (t != null && "0".equals(t.getDiamondState())) diamondService.refund(t);
         }
         resultMapper.deleteByTaskIds(taskIds);
         return taskMapper.deleteTaskByIds(taskIds);
@@ -152,6 +99,16 @@ public class WimoTaskServiceImpl implements IWimoTaskService
         if (!"2".equals(t.getStatus()) && !"3".equals(t.getStatus()) && !"4".equals(t.getStatus()))
         {
             throw new WimoException("该任务当前状态不可重试");
+        }
+        // 重试不重复扣费：只有「失败/取消时已退还」的任务才需要按原账单重新预扣
+        if ("2".equals(t.getDiamondState()) && t.getCostDiamonds() != null && t.getCostDiamonds() > 0)
+        {
+            diamondService.freeze(t.getUserId(), t.getCostDiamonds(), taskId, t.getTaskType());
+            WimoTask b = new WimoTask();
+            b.setTaskId(taskId);
+            b.setDiamondState("0");
+            b.setUpdateTime(new Date());
+            taskMapper.updateTask(b);
         }
         resultMapper.deleteByTaskId(taskId);
         WimoTask reset = new WimoTask();
@@ -181,6 +138,8 @@ public class WimoTaskServiceImpl implements IWimoTaskService
         c.setStatus("4");
         c.setUpdateTime(new Date());
         taskMapper.updateTask(c);
+        // 取消即退还冻结钻石
+        diamondService.refund(t);
         return getTask(taskId);
     }
 
@@ -194,19 +153,11 @@ public class WimoTaskServiceImpl implements IWimoTaskService
     private WimoTask requireOwner(Long taskId, Long userId)
     {
         WimoTask t = getTask(taskId);
-        if (t == null)
-        {
-            throw new WimoException("任务不存在");
-        }
+        if (t == null) throw new WimoException("任务不存在");
         if (userId != null && userId > 0 && !userId.equals(t.getUserId()))
         {
             throw new WimoException("无权操作该任务");
         }
         return t;
-    }
-
-    private String str(Object o)
-    {
-        return o == null ? "" : o.toString();
     }
 }

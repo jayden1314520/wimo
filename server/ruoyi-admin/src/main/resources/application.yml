@@ -150,26 +150,52 @@ xss:
 # 全部为开箱即用的本地模拟值；替换成真实服务只需改这里（或用环境变量覆盖），无需改代码。
 # 详细见根目录 docs/API.md 与 README.md。
 wimo:
-  # 邮件通道：mock = 写日志不真发信，验证码通过接口 demoCode 回显（默认）
+  # 邮件通道：留给用户自行配置。mock = 写日志不真发信，验证码通过接口 demoCode 回显（本地默认）
   #           http = POST {to,scene,code,subject,text} 到 http-endpoint
   mail:
-    provider: mock
-    http-endpoint: ''
-    http-token: ''
+    provider: ${WIMO_MAIL_PROVIDER:mock}
+    http-endpoint: ${WIMO_MAIL_ENDPOINT:''}
+    http-token: ${WIMO_MAIL_TOKEN:''}
   # 生成器：mock = 复制示例封面/视频为结果文件（默认）
   #         remote = POST 任务到模型网关，解析 {"results":["url",...]}
   generator:
-    provider: mock
-    remote-url: ''
-    remote-token: ''
-    step-ms: 350        # 模拟生成每步耗时（毫秒），8 步约 3 秒
+    provider: ${WIMO_GENERATOR_PROVIDER:mock}
+    remote-url: ${WIMO_GENERATOR_URL:''}
+    remote-token: ${WIMO_GENERATOR_TOKEN:''}
+    step-ms: 350        # 模拟生成每步耗时（毫秒）
     result-count: 4     # 模拟生成的结果文件数量
   # 本地模拟使用的示例素材目录（容器部署时挂载到该路径）
   mock:
-    sample-dir: /workspace/wimogen-platform/web/public/images/preview
-  # 存储：local = 落地 RuoYi profile/upload（默认）；remote = 对象存储网关
+    sample-dir: ${WIMO_SAMPLE_DIR:/workspace/wimogen-platform/web/public/images/preview}
+  # ---------------------------------------------------------------
+  # 素材存储：local（默认，本地磁盘）/ qiniu（七牛 Kodo）/ r2（Cloudflare R2）/ remote（通用网关）
+  # 图片都走对象存储时，把 provider 改成 qiniu 或 r2 并填好凭证即可，无需改代码。
+  # ---------------------------------------------------------------
   storage:
-    provider: local
+    provider: ${WIMO_STORAGE_PROVIDER:local}
+    # 通用对象存储网关（provider=remote 时生效）
+    remote-endpoint: ${WIMO_STORAGE_REMOTE_ENDPOINT:''}
+    remote-token: ${WIMO_STORAGE_REMOTE_TOKEN:''}
+    # 七牛云 Kodo
+    qiniu:
+      access-key: ${QINIU_ACCESS_KEY:''}
+      secret-key: ${QINIU_SECRET_KEY:''}
+      bucket: ${QINIU_BUCKET:''}
+      domain: ${QINIU_DOMAIN:''}          # CDN 外链域名，如 https://cdn.example.com
+      upload-url: ${QINIU_UPLOAD_URL:''} # 留空按 region 自动选择
+      region: ${QINIU_REGION:z0}         # z0 华东 / z1 华北 / z2 华南 / na0 北美 / as0 东南亚
+    # Cloudflare R2（S3 兼容，SigV4 region 固定 auto）
+    r2:
+      account-id: ${R2_ACCOUNT_ID:''}
+      access-key: ${R2_ACCESS_KEY:''}
+      secret-key: ${R2_SECRET_KEY:''}
+      bucket: ${R2_BUCKET:''}
+      public-domain: ${R2_PUBLIC_DOMAIN:''}  # 自定义域或 https://pub-xxx.r2.dev
+      endpoint: ${R2_ENDPOINT:''}            # 留空则用 https://<account-id>.r2.cloudflarestorage.com
+  # 钻石账户
+  diamond:
+    register-gift: 100        # 注册赠送体验钻石
+    charge-anonymous: false   # 未登录演示用户不扣钻石（true 则匿名也按用户 0 计费）
   # 账号与验证码
   auth:
     code-ttl: 300           # 验证码有效期（秒）

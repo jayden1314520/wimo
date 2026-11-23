@@ -93,6 +93,7 @@ const progress = ref(0)
 const result = ref<string[] | null>(null)
 const records = ref<any[]>([])
 const api = useWimoApi()
+const { refreshBalance, showToast } = useAuth()
 
 const displayItems = computed(() => result.value ?? sample())
 
@@ -132,7 +133,7 @@ function localMock(payload: any) {
 /* 生成设置字段：从表单 payload 顶层汇总为后端 schema 所需的 common 对象 */
 const COMMON_KEYS = [
   'ratio', 'platform', 'region', 'language', 'resolution', 'quality', 'model',
-  'videoResolution', 'videoScene', 'cameraStyle', 'duration', 'videoModel'
+  'videoResolution', 'videoScene', 'cameraStyle', 'duration', 'videoModel', 'resultCount'
 ]
 
 /** 素材是否来自后端（/profile 或完整 URL）；含 dataURL 说明上传未连上后端 */
@@ -165,6 +166,11 @@ async function onSubmit(payload: any) {
       common,
       resultMode: payload.resultMode || 'default'
     })
+    // 创建成功即预扣钻石：立刻刷新顶栏余额
+    await refreshBalance()
+    if ((task as any).costDiamonds) {
+      showToast(t('form.costCharged', { n: (task as any).costDiamonds }))
+    }
 
     const startedAt = Date.now()
     while (Date.now() - startedAt < 90000) {
@@ -182,8 +188,18 @@ async function onSubmit(payload: any) {
       }
     }
     if (!result.value) result.value = sample()
+    // 生成结束（成功扣减 / 失败退还）后再刷新一次余额
+    await refreshBalance()
     await openRecords()
-  } catch {
+  } catch (e: any) {
+    const msg = e?.message || ''
+    // 余额不足 / 校验失败等业务错误：不再降级绕过计费，直接提示用户
+    if (msg.includes('钻石') || msg.includes('余额') || msg.includes('智能体') || msg.includes('工作流')) {
+      showToast(msg)
+      await refreshBalance()
+      generating.value = false
+      return
+    }
     // 后端未启动 / 生成失败时降级为本地模拟，保证页面可演示
     for (let i = 1; i <= 8; i++) {
       await new Promise(r => setTimeout(r, 240))

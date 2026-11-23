@@ -6,6 +6,7 @@
         <id     property="taskId"        column="task_id"       />
         <result property="userId"        column="user_id"       />
         <result property="taskType"      column="task_type"     />
+        <result property="workflowId"    column="workflow_id"   />
         <result property="title"         column="title"         />
         <result property="productName"   column="product_name"  />
         <result property="sellingPoints" column="selling_points"/>
@@ -16,6 +17,10 @@
         <result property="resolution"    column="resolution"    />
         <result property="quality"       column="quality"       />
         <result property="model"         column="model"         />
+        <result property="modelKey"      column="model_key"     />
+        <result property="costDiamonds"  column="cost_diamonds" />
+        <result property="billingSnapshot" column="billing_snapshot"/>
+        <result property="diamondState"  column="diamond_state" />
         <result property="resultMode"    column="result_mode"   />
         <result property="images"        column="images"        />
         <result property="payload"       column="payload"       />
@@ -33,20 +38,23 @@
     </resultMap>
 
     <sql id="selectTaskVo">
-        select task_id, user_id, task_type, title, product_name, selling_points, ratio, platform, region,
-               lang, resolution, quality, model, result_mode, images, payload, status, progress, results,
+        select task_id, user_id, task_type, workflow_id, title, product_name, selling_points, ratio, platform, region,
+               lang, resolution, quality, model, model_key, cost_diamonds, billing_snapshot, diamond_state,
+               result_mode, images, payload, status, progress, results,
                extra, result_count, retry_count, cost_ms, error_msg, finish_time, create_time, update_time
         from wimo_task
     </sql>
 
     <insert id="insertTask" parameterType="com.ruoyi.wimo.domain.WimoTask" useGeneratedKeys="true" keyProperty="taskId">
         insert into wimo_task (
-            user_id, task_type, title, product_name, selling_points, ratio, platform, region, lang,
-            resolution, quality, model, result_mode, images, payload, status, progress,
+            user_id, task_type, workflow_id, title, product_name, selling_points, ratio, platform, region, lang,
+            resolution, quality, model, model_key, cost_diamonds, billing_snapshot, diamond_state,
+            result_mode, images, payload, status, progress,
             results, extra, result_count, retry_count, cost_ms, error_msg, create_time, update_time
         ) values (
-            #{userId}, #{taskType}, #{title}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
-            #{resolution}, #{quality}, #{model}, #{resultMode}, #{images}, #{payload}, #{status}, #{progress},
+            #{userId}, #{taskType}, #{workflowId}, #{title}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
+            #{resolution}, #{quality}, #{model}, #{modelKey}, #{costDiamonds}, #{billingSnapshot}, #{diamondState},
+            #{resultMode}, #{images}, #{payload}, #{status}, #{progress},
             #{results}, #{extra}, #{resultCount}, #{retryCount}, #{costMs}, #{errorMsg}, #{createTime}, #{updateTime}
         )
     </insert>
@@ -61,6 +69,10 @@
             <if test="resultCount != null">result_count = #{resultCount},</if>
             <if test="retryCount != null">retry_count = #{retryCount},</if>
             <if test="costMs != null">cost_ms = #{costMs},</if>
+            <if test="diamondState != null">diamond_state = #{diamondState},</if>
+            <if test="costDiamonds != null">cost_diamonds = #{costDiamonds},</if>
+            <if test="billingSnapshot != null">billing_snapshot = #{billingSnapshot},</if>
+            <if test="modelKey != null">model_key = #{modelKey},</if>
             <if test="finishTime != null">finish_time = #{finishTime},</if>
             update_time = #{updateTime}
         </set>

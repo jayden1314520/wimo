@@ -133,6 +133,26 @@
       </div>
     </div>
 
+    <!-- 本次消耗钻石：随清晰度 / 时长 / 模型实时预估 -->
+    <div class="cost-bar" :class="{ 'cost-bar--short': quote && !quote.enough }">
+      <div class="cost-bar__left">
+        <AppIcon name="spark" :size="15" />
+        <span>{{ t('form.costLabel') }}</span>
+      </div>
+      <div class="cost-bar__right">
+        <template v-if="quote">
+          <span class="cost-bar__num">{{ quote.cost }}</span>
+          <span class="cost-bar__unit">{{ t('form.costUnit') }}</span>
+          <span class="cost-bar__sep">·</span>
+          <span class="cost-bar__model">{{ quote.modelKey }}</span>
+        </template>
+        <span v-else class="cost-bar__hint">{{ t('form.costCalculating') }}</span>
+      </div>
+    </div>
+    <p v-if="quote && !quote.enough" class="cost-warn">
+      {{ t('form.costNotEnough', { need: quote.cost, balance: quote.balance }) }}
+    </p>
+
     <!-- 结果配置 -->
     <div v-if="schema.resultMode" class="field">
       <div class="field__label">{{ t('form.resultLabel') }}</div>
@@ -151,7 +171,7 @@
       </p>
     </div>
 
-    <button class="submit" type="submit" :disabled="!canSubmit || generating">
+    <button class="submit" type="submit" :disabled="!canSubmit || generating || (quote && !quote.enough)">
       <AppIcon name="bolt" :size="14" />
       {{ generating ? t('form.submitting') : t('form.submit') }}
     </button>
@@ -163,11 +183,43 @@ import type { TaskSchema } from '~/config/tasks'
 import { getSchema } from '~/config/tasks'
 
 const props = defineProps<{ generating: boolean; schemaKey: string }>()
-const emit = defineEmits<{ submit: [payload: any] }>()
+const emit = defineEmits<{ submit: [payload: any]; balanceChanged: [] }>()
 const { t, locale } = useI18n()
 const api = useWimoApi()
 
 const schema = computed<TaskSchema>(() => getSchema(props.schemaKey))
+
+/* ---------------- 动态模型 / 智能体（管理端配置，web 端不写死） ---------------- */
+interface RemoteModel { modelKey: string; nameZh: string; nameEn: string; capability: string; costMultiplier: number }
+const remoteModels = ref<RemoteModel[]>([])
+const currentWorkflow = ref<any>(null)
+
+/** 按当前智能体的能力拉取可用模型；后端不可达时回退内置选项，保证静态站可演示 */
+async function loadModels() {
+  try {
+    const list = await api.models(props.schemaKey)
+    if (Array.isArray(list) && list.length) remoteModels.value = list
+    else remoteModels.value = []
+  } catch { remoteModels.value = [] }
+  // 若当前选中的模型不在新列表里，自动切到首个可用模型
+  const isVideo = schema.value.common.includes('videoModel')
+  const field = isVideo ? 'videoModel' : 'model'
+  const keys = modelOptions.value.map(o => o.value)
+  if (keys.length && !keys.includes((model as any)[field])) {
+    (model as any)[field] = keys[0]
+  }
+}
+
+/** 首屏拉一次智能体摘要（用于展示计费单位说明） */
+async function loadWorkflow() {
+  try {
+    const list = await api.workflows()
+    currentWorkflow.value = (list || []).find((w: any) => w.workflowKey === props.schemaKey) || null
+  } catch { currentWorkflow.value = null }
+}
+
+watch(() => props.schemaKey, () => { loadModels(); loadWorkflow() })
+onMounted(() => { loadModels(); loadWorkflow() })
 
 interface Asset {
   preview: string
@@ -204,13 +256,13 @@ const ALL_COMMON: Record<string, () => { value: string; label: string }[]> = {
   language: () => ['zh', 'en', 'ja'].map(v => ({ value: v, label: t(`options.language.${v}`) })),
   resolution: () => ['2k', '4k'].map(v => ({ value: v, label: t(`options.resolution.${v}`) })),
   quality: () => ['low', 'mid', 'high'].map(v => ({ value: v, label: t(`options.quality.${v}`) })),
-  videoResolution: () => ['480p', '720p'].map(v => ({ value: v, label: v })),
+  // 清晰度档位与后端 multipliers 对齐；视频的 1080p/2k/4k 会显著提高消耗
+  videoResolution: () => ['480p', '720p', '1080p', '2k', '4k'].map(v => ({ value: v, label: v })),
   videoScene: () => ['studio', 'desk', 'bath', 'kitchen', 'outdoor', 'tech', 'premium']
     .map(v => ({ value: v, label: t(`options.videoScene.${v}`) })),
   cameraStyle: () => ['closeup', 'slowmo', 'macro', 'orbit', 'static', 'handheld']
     .map(v => ({ value: v, label: t(`options.cameraStyle.${v}`) })),
-  videoModel: () => ['seedance2fast', 'seedance25flash', 'seedance25', 'seedance20', 'seedance20mini']
-    .map(v => ({ value: v, label: t(`options.videoModel.${v}`) }))
+  videoModel: () => modelOptions.value
 }
 
 /* duration 为数字输入（秒），不是下拉 */
@@ -236,9 +288,25 @@ const model = reactive({
   duration: 5
 })
 
-const modelOptions = computed(() =>
-  ['wimo2', 'wimo2pro'].map(v => ({ value: v, label: t(`options.model.${v}`) }))
-)
+/**
+ * 模型下拉完全由后端 /api/wimo/model/list?workflow=xxx 驱动。
+ * 后端已按「该智能体的能力 + allowedModels 白名单」过滤，图片/视频共用此列表
+ * （一个 schema 只会用到 model 或 videoModel 其中一个）。
+ * 后端不可达（GitHub Pages 静态演示）时回退内置选项。
+ */
+const modelOptions = computed(() => {
+  if (remoteModels.value.length) {
+    return remoteModels.value.map(m => ({
+      value: m.modelKey,
+      label: locale.value === 'en' ? (m.nameEn || m.modelKey) : (m.nameZh || m.modelKey)
+    }))
+  }
+  const isVideo = schema.value.common.includes('videoModel')
+  const keys = isVideo
+    ? ['seedance2fast', 'seedance25flash', 'seedance25', 'seedance20', 'seedance20mini']
+    : ['wimo2', 'wimo2pro']
+  return keys.map(v => ({ value: v, label: t(`options.${isVideo ? 'videoModel' : 'model'}.${v}`) }))
+})
 
 /* 必填校验：每个非选填上传槽位达到最少数量 + required 字段非空 */
 const canSubmit = computed(() => {
@@ -250,6 +318,60 @@ const canSubmit = computed(() => {
   }
   return s.fields.every(f => !f.required || String(values[f.key] ?? '').trim() !== '')
 })
+
+/* ---------------- 实时钻石预估 ----------------
+   把当前生成设置打包成后端 WimoTaskSubmit.common，
+   清晰度/时长/模型任一变化都会重新向后端 /api/wimo/billing/quote 询价。 */
+const quote = ref<any>(null)
+const quoting = ref(false)
+let quoteTimer: ReturnType<typeof setTimeout> | null = null
+let quoteSeq = 0
+
+function buildCommon(): Record<string, any> {
+  const c: Record<string, any> = {}
+  for (const key of schema.value.common) {
+    if ((model as any)[key] !== undefined) c[key] = (model as any)[key]
+  }
+  // 图片类把 model 字段显式带入（schema.common 里通常没有 model）
+  if (!schema.value.common.includes('videoModel')) c.model = model.model
+  // 结果张数 / 时长用于计费单位
+  c.resultCount = 4
+  return c
+}
+
+async function refreshQuote() {
+  const seq = ++quoteSeq
+  try {
+    const q = await api.quote({
+      taskType: props.schemaKey,
+      uploads: {},
+      values: {},
+      common: buildCommon()
+    })
+    if (seq === quoteSeq) quote.value = q
+  } catch {
+    // 后端不可达：本地按内置规则给个演示价，避免静态站显示空
+    if (seq === quoteSeq) {
+      quote.value = {
+        cost: schema.value.common.includes('videoModel') ? 42 : 16,
+        modelKey: schema.value.common.includes('videoModel') ? model.videoModel : model.model,
+        balance: 100, enough: true, anonymous: true, workflowKey: props.schemaKey, snapshot: {}
+      }
+    }
+  }
+}
+
+function scheduleQuote() {
+  if (quoteTimer) clearTimeout(quoteTimer)
+  quoteTimer = setTimeout(refreshQuote, 260)
+}
+
+// 监听生成设置与智能体切换，实时重新询价
+watch(
+  () => [props.schemaKey, JSON.stringify(model)],
+  () => scheduleQuote(),
+  { immediate: true }
+)
 
 function setFileInput(key: string, el: any) {
   fileInputs[key] = el as HTMLInputElement

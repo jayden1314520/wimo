@@ -24,6 +24,9 @@ public class WimoTask
     /** 功能 key，对应 wimo_schema.task_key */
     private String taskType;
 
+    /** 关联工作流 / 智能体 */
+    private Long workflowId;
+
     private String title;
 
     private String productName;
@@ -37,6 +40,19 @@ public class WimoTask
     private String resolution;
     private String quality;
     private String model;
+
+    /** 计费采用的模型 key（快照） */
+    private String modelKey;
+
+    /** 本单消耗钻石 */
+    private Long costDiamonds;
+
+    /** 计费明细快照 JSON（规则改动不影响历史账单） */
+    private String billingSnapshot;
+
+    /** 0 已冻结待结算 / 1 已扣减 / 2 已退还 / 9 不计费（匿名演示） */
+    private String diamondState;
+
     private String resultMode;
 
     /** 素材 URL 列表（逗号分隔） */

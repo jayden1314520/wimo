@@ -17,9 +17,12 @@ import com.ruoyi.wimo.mapper.WimoTaskMapper;
 import com.ruoyi.wimo.mapper.WimoTaskResultMapper;
 
 /**
- * 异步生成工作器：任务创建后提交线程池，按 8 步推进进度，
+ * 异步生成工作器：任务创建后提交线程池，按「智能体步骤数」推进进度，
  * 调用可插拔生成器产出结果文件，最终写入 wimo_task_result。
- * 支持取消（status=4）与失败状态回写。
+ *
+ * <p>钻石两阶段结算在此收口：成功扣减 / 失败·取消退还（幂等）。</p>
+ *
+ * @author wimo
  */
 @Service
 public class WimoGenerateWorker
@@ -39,14 +42,11 @@ public class WimoGenerateWorker
         }
     });
 
-    @Autowired
-    private WimoTaskMapper taskMapper;
-
-    @Autowired
-    private WimoTaskResultMapper resultMapper;
-
-    @Autowired
-    private WimoGenerator generator;
+    @Autowired private WimoTaskMapper taskMapper;
+    @Autowired private WimoTaskResultMapper resultMapper;
+    @Autowired private WimoGenerator generator;
+    @Autowired private WimoWorkflowService workflowService;
+    @Autowired private WimoDiamondService diamondService;
 
     public void submit(Long taskId)
     {
@@ -57,25 +57,27 @@ public class WimoGenerateWorker
     {
         long start = System.currentTimeMillis();
         WimoTask task = taskMapper.selectTaskById(taskId);
-        if (task == null || !"0".equals(task.getStatus()))
-        {
-            return;
-        }
-        mark(taskId, "1", 5, null);
+        if (task == null || !"0".equals(task.getStatus())) return;
+        mark(taskId, "1", 5);
+
+        // 步骤来自智能体定义（管理端可配），而非写死的 8 步
+        List<String> steps = workflowService.stepsOf(task.getTaskType());
+        int total = Math.max(1, steps.size());
         try
         {
-            for (int i = 1; i <= 8; i++)
+            for (int i = 1; i <= total; i++)
             {
                 Thread.sleep(Math.max(50L, generator.stepMs()));
                 WimoTask cur = taskMapper.selectTaskById(taskId);
                 if (cur == null || "4".equals(cur.getStatus()))
                 {
-                    log.info("任务已取消 taskId={}", taskId);
+                    log.info("任务已取消 taskId={}，退还冻结钻石", taskId);
+                    diamondService.refund(task);
                     return;
                 }
                 WimoTask step = new WimoTask();
                 step.setTaskId(taskId);
-                step.setProgress(5 + i * 11);
+                step.setProgress(5 + (int) (95.0 * i / total));
                 step.setUpdateTime(new Date());
                 taskMapper.updateTask(step);
             }
@@ -87,7 +89,7 @@ public class WimoGenerateWorker
                 WimoTaskResult r = new WimoTaskResult();
                 r.setTaskId(taskId);
                 r.setFileUrl(url);
-                r.setFileType(url.endsWith(".mp4") || url.endsWith(".webm") ? "video" : "image");
+                r.setFileType(url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".mov") ? "video" : "image");
                 r.setSortNo(sort++);
                 r.setCreateTime(new Date());
                 resultMapper.insertResult(r);
@@ -102,7 +104,10 @@ public class WimoGenerateWorker
             done.setFinishTime(new Date());
             done.setUpdateTime(new Date());
             taskMapper.updateTask(done);
-            log.info("任务生成完成 taskId={} results={} cost={}ms", taskId, urls.size(), done.getCostMs());
+            // 成功结算：冻结 → 已消耗
+            diamondService.settle(task);
+            log.info("任务生成完成 taskId={} workflow={} steps={} results={} diamonds={} cost={}ms",
+                    taskId, task.getTaskType(), total, urls.size(), task.getCostDiamonds(), done.getCostMs());
         }
         catch (Exception e)
         {
@@ -115,12 +120,14 @@ public class WimoGenerateWorker
             fail.setFinishTime(new Date());
             fail.setUpdateTime(new Date());
             taskMapper.updateTask(fail);
+            // 失败退还
+            diamondService.refund(task);
         }
     }
 
-    private void mark(Long taskId, String status, Integer progress, WimoTask extra)
+    private void mark(Long taskId, String status, Integer progress)
     {
-        WimoTask t = extra == null ? new WimoTask() : extra;
+        WimoTask t = new WimoTask();
         t.setTaskId(taskId);
         t.setStatus(status);
         t.setProgress(progress);

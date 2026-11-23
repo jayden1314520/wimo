@@ -31,7 +31,27 @@ export function useAuth() {
   const authOpen = useState<boolean>('wimo_auth_open', () => false)
   const mobileNavOpen = useState<boolean>('wimo_mobile_nav', () => false)
   const toast = useState<string>('wimo_toast', () => '')
+  /** 钻石钱包（后端真实余额；无后端时保留演示值，保证静态站可用） */
+  const diamonds = useState<number>('wimo_diamonds', () => 100)
+  const diamondFrozen = useState<number>('wimo_diamonds_frozen', () => 0)
+  const diamondTotal = useState<number>('wimo_diamonds_total', () => 100)
+  const diamondUsed = useState<number>('wimo_diamonds_used', () => 0)
   const api = useWimoApi()
+
+  /** 刷新钻石余额：后端不可达时静默降级，保留演示值 */
+  async function refreshBalance() {
+    try {
+      const b = await api.diamondBalance()
+      if (b && b.balance !== undefined) {
+        diamonds.value = Number(b.balance)
+        diamondFrozen.value = Number(b.frozen ?? 0)
+        diamondTotal.value = Number(b.total ?? diamonds.value)
+        diamondUsed.value = Number(b.used ?? 0)
+      }
+    } catch (e) {
+      if (!(e instanceof NetworkError)) { /* 业务错误忽略，保留上次值 */ }
+    }
+  }
 
   /** 客户端挂载后恢复登录态；有 token 时向后端校验一次 */
   function restore() {
@@ -52,12 +72,14 @@ export function useAuth() {
           if (!(e instanceof NetworkError)) clearSession()
         })
     }
+    refreshBalance()
   }
 
   function signIn(u: WimoUser, token?: string) {
     user.value = u
     setCachedUser(u)
     if (token) setAuthToken(token)
+    refreshBalance()
   }
 
   function clearSession() {
@@ -201,6 +223,7 @@ export function useAuth() {
 
   return {
     user, authOpen, mobileNavOpen, toast,
+    diamonds, diamondFrozen, diamondTotal, diamondUsed, refreshBalance,
     restore, signIn, signOut,
     hasAccount, registerAccount, verifyPassword,
     sendCode, register, loginPassword, loginCode, resetPassword,

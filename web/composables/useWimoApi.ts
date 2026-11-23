@@ -57,7 +57,47 @@ export interface WimoTaskRecord {
   resultCount?: number
   errorMsg?: string
   costMs?: number
+  costDiamonds?: number
+  diamondState?: string
+  billingSnapshot?: string
+  modelKey?: string
   createTime: string
+}
+
+/** 管理端配置的 AI 模型 */
+export interface WimoModel {
+  modelKey: string
+  nameZh: string
+  nameEn: string
+  capability: string
+  costMultiplier: number
+  config?: Record<string, any>
+}
+
+/** 智能体工作流（一个菜单 = 一个工作流） */
+export interface WimoWorkflow {
+  workflowKey: string
+  nameZh: string
+  nameEn: string
+  group: string
+  capability: string
+  baseCost: number
+  unit: string
+  unitCost: number
+  minCost: number
+  maxCost: number
+  defaultModel: string
+}
+
+/** 提交前预估消耗 */
+export interface WimoQuote {
+  cost: number
+  balance: number
+  enough: boolean
+  anonymous: boolean
+  modelKey: string
+  workflowKey: string
+  snapshot: Record<string, any>
 }
 
 export function useWimoApi() {
@@ -96,6 +136,30 @@ export function useWimoApi() {
 
     /** 功能模板（管理端可后台启停） */
     schemas: () => request<any[]>('/api/wimo/schema/list'),
+
+    /** 智能体工作流目录（菜单 = 工作流，含起步价与计费单位） */
+    workflows: () => request<WimoWorkflow[]>('/api/wimo/workflow/list'),
+
+    /** 可选模型：按智能体 key 拉取（管理端配置，web 端不写死） */
+    models: (workflowKey?: string, capability?: string) => {
+      const q = new URLSearchParams()
+      if (workflowKey) q.set('workflow', workflowKey)
+      if (capability) q.set('capability', capability)
+      return request<WimoModel[]>(`/api/wimo/model/list?${q.toString()}`)
+    },
+
+    /** 提交前预估本次消耗钻石（随清晰度/时长/模型实时变化） */
+    quote: (submit: WimoTaskSubmit) =>
+      request<WimoQuote>('/api/wimo/billing/quote', { method: 'POST', body: submit }),
+
+    /** 当前会员钻石钱包 */
+    diamondBalance: () => request<Record<string, any>>('/api/wimo/diamond/balance'),
+
+    /** 钻石流水 */
+    diamondLogs: (limit = 20) => request<any[]>(`/api/wimo/diamond/logs?limit=${limit}`),
+
+    /** 首屏一次性配置（工作流 + 模型 + 余额） */
+    marketConfig: () => request<Record<string, any>>('/api/wimo/market/config'),
 
     /** AI 帮写 */
     aiWrite: (body: Record<string, any>) =>

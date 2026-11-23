@@ -30,6 +30,16 @@ public class WimoUser
     /** 是否同意用户协议 */
     private String agreed;
 
+    /** 可用钻石余额 */
+    private Long diamondBalance;
+
+    /** 生成中冻结的钻石 */
+    private Long diamondFrozen;
+
+    /** 累计获得 / 累计消耗（看板统计用） */
+    private Long diamondTotal;
+    private Long diamondUsed;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date lastLoginTime;
 

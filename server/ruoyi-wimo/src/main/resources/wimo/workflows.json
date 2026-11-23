@@ -1,0 +1,53 @@
+[
+  { "workflowKey": "productSet", "nameZh": "商品套图", "nameEn": "Product Set", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 8, "unit": "count", "unitCost": 2, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 5, "maxCost": 500, "sortNo": 1,
+    "steps": ["素材校验","提示词编排","模型推理","高清放大","风格后处理","结果归档","计费结算"], "remark": "按结果张数计费；4K / 高画质 / Pro 模型叠加倍率" },
+
+  { "workflowKey": "productDetail", "nameZh": "商品详情页", "nameEn": "Product Detail", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 10, "unit": "count", "unitCost": 2.5, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 6, "maxCost": 600, "sortNo": 2,
+    "steps": ["素材校验","卖点结构化","版式编排","模型推理","高清放大","结果归档","计费结算"], "remark": "详情页长图，单张成本略高" },
+
+  { "workflowKey": "hotReplica", "nameZh": "爆款图复刻", "nameEn": "Hot Replica", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2pro", "baseCost": 14, "unit": "count", "unitCost": 3, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 8, "maxCost": 700, "sortNo": 3,
+    "steps": ["参考图解析","相似度对齐","提示词编排","模型推理","风格校正","结果归档","计费结算"], "remark": "默认 Pro 模型，复刻精度优先" },
+
+  { "workflowKey": "scene", "nameZh": "商品场景图", "nameEn": "Scene", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 9, "unit": "count", "unitCost": 2, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 5, "maxCost": 500, "sortNo": 4,
+    "steps": ["素材校验","场景语义生成","光影匹配","模型推理","后处理","结果归档","计费结算"], "remark": "" },
+
+  { "workflowKey": "retouch", "nameZh": "商品图精修", "nameEn": "Retouch", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 6, "unit": "count", "unitCost": 1.5, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 4, "maxCost": 400, "sortNo": 5,
+    "steps": ["素材校验","瑕疵检测","局部重绘","色彩统一","结果归档","计费结算"], "remark": "轻量精修，单张成本最低" },
+
+  { "workflowKey": "poster", "nameZh": "电商海报", "nameEn": "Poster", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 10, "unit": "count", "unitCost": 2, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 6, "maxCost": 500, "sortNo": 6,
+    "steps": ["素材校验","文案排版","模型推理","文字图层合成","结果归档","计费结算"], "remark": "可在管理端把 capability 改为 text2img 切换纯文案模型池" },
+
+  { "workflowKey": "flatLay", "nameZh": "服饰平铺图", "nameEn": "Flat Lay", "groupKey": "ecommerce", "capability": "img2img", "defaultModel": "wimo2", "baseCost": 8, "unit": "count", "unitCost": 2, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 5, "maxCost": 500, "sortNo": 7,
+    "steps": ["素材校验","布料形变估计","模型推理","褶皱光影","结果归档","计费结算"], "remark": "" },
+
+  { "workflowKey": "modelTryon", "nameZh": "模特试衣", "nameEn": "Model Try-on", "groupKey": "model", "capability": "img2img", "defaultModel": "wimo2pro", "baseCost": 16, "unit": "count", "unitCost": 3, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 10, "maxCost": 800, "sortNo": 8,
+    "steps": ["人像/服饰分离","姿态匹配","模型推理","边缘融合","质感增强","结果归档","计费结算"], "remark": "人物类任务成本高" },
+
+  { "workflowKey": "anythingWear", "nameZh": "万物穿戴", "nameEn": "Anything Wear", "groupKey": "model", "capability": "img2img", "defaultModel": "wimo2pro", "baseCost": 16, "unit": "count", "unitCost": 3, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 10, "maxCost": 800, "sortNo": 9,
+    "steps": ["主体识别","穿戴区域推理","模型推理","遮挡处理","结果归档","计费结算"], "remark": "" },
+
+  { "workflowKey": "swapModel", "nameZh": "AI 换模特", "nameEn": "Swap Model", "groupKey": "model", "capability": "img2img", "defaultModel": "wimo2pro", "baseCost": 14, "unit": "count", "unitCost": 2.5, "unitField": "resultCount",
+    "multipliers": {"resolution":{"2k":1.0,"4k":1.6},"quality":{"low":0.8,"mid":1.0,"high":1.4}}, "minCost": 8, "maxCost": 700, "sortNo": 10,
+    "steps": ["人像解析","模特特征注入","模型推理","肤色统一","结果归档","计费结算"], "remark": "" },
+
+  { "workflowKey": "productVideo", "nameZh": "商品展示短片", "nameEn": "Product Video", "groupKey": "video", "capability": "img2video", "defaultModel": "seedance2fast", "baseCost": 20, "unit": "second", "unitCost": 1.5, "unitField": "duration",
+    "multipliers": {"videoResolution":{"480p":1.0,"720p":1.4,"1080p":1.8,"2k":2.4,"4k":3.2}}, "minCost": 10, "maxCost": 2000, "sortNo": 11,
+    "steps": ["素材校验","分镜与时长规划","运镜编排","模型推理","帧间补强","音画合成","结果归档","计费结算"], "remark": "基础价 + 每秒单价，再乘清晰度倍率与模型倍率" },
+
+  { "workflowKey": "salesVideo", "nameZh": "带货视频", "nameEn": "Sales Video", "groupKey": "video", "capability": "img2video", "defaultModel": "seedance2fast", "baseCost": 25, "unit": "second", "unitCost": 1.8, "unitField": "duration",
+    "multipliers": {"videoResolution":{"480p":1.0,"720p":1.4,"1080p":1.8,"2k":2.4,"4k":3.2}}, "minCost": 12, "maxCost": 2000, "sortNo": 12,
+    "steps": ["卖点脚本生成","分镜与时长规划","口播/字幕编排","模型推理","帧间补强","音画合成","结果归档","计费结算"], "remark": "含脚本生成，基础价与每秒单价略高" },
+
+  { "workflowKey": "storeVisit", "nameZh": "探店视频", "nameEn": "Store Visit", "groupKey": "video", "capability": "img2video", "defaultModel": "seedance2fast", "baseCost": 22, "unit": "second", "unitCost": 1.6, "unitField": "duration",
+    "multipliers": {"videoResolution":{"480p":1.0,"720p":1.4,"1080p":1.8,"2k":2.4,"4k":3.2}}, "minCost": 10, "maxCost": 2000, "sortNo": 13,
+    "steps": ["多素材归集(4-8 菜品)","脚本与探店路线","分镜与时长规划","模型推理","人物一致性校正","音画合成","结果归档","计费结算"], "remark": "多素材智能体，仍按秒 + 清晰度 + 模型计费" }
+]

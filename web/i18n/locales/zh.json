@@ -27,7 +27,8 @@
       "productVideo": "商品展示短片",
       "salesVideo": "带货视频",
       "storeVisit": "探店视频"
-    }
+    },
+    "diamondHint": "钻石余额：不同工作流、清晰度、时长与模型消耗不同"
   },
   "form": {
     "title": "商品套图",
@@ -53,7 +54,8 @@
       "cameraStyle": "镜头风格",
       "videoResolution": "清晰度",
       "duration": "视频时长",
-      "videoModel": "模型"
+      "videoModel": "模型",
+      "resultCount": "结果张数"
     },
     "resultLabel": "结果配置",
     "resultDefault": "系统默认",
@@ -103,7 +105,12 @@
     },
     "hint": {
       "dishes": "支持 {min}–{max} 个菜品"
-    }
+    },
+    "costLabel": "本次预计消耗",
+    "costUnit": "钻石",
+    "costCalculating": "询价中…",
+    "costNotEnough": "余额不足：本次需 {need} 钻石，当前 {balance} 钻石",
+    "costCharged": "已预扣 {n} 钻石，生成失败将自动退还"
   },
   "options": {
     "platform": {

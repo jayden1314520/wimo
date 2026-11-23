@@ -11,6 +11,17 @@
       </el-col>
     </el-row>
 
+    <!-- 钻石消耗概览 -->
+    <el-row :gutter="14" class="stat-row">
+      <el-col :xs="12" :sm="8" :md="6" v-for="c in diamondCards" :key="c.label">
+        <el-card shadow="never" class="stat-card">
+          <div class="stat-card__label">{{ c.label }}</div>
+          <div class="stat-card__value" :style="{ color: c.color }">{{ c.value }}</div>
+          <div class="stat-card__sub">{{ c.sub }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 适配器状态 + 趋势天数 -->
     <el-card shadow="never" class="mb14">
       <div class="provider-bar">
@@ -18,6 +29,8 @@
         <el-tag type="success" effect="plain">生成器：{{ providers.generator || '-' }}</el-tag>
         <el-tag type="success" effect="plain">邮件：{{ providers.mail || '-' }}</el-tag>
         <el-tag type="success" effect="plain">存储：{{ providers.storage || '-' }}</el-tag>
+        <el-tag type="warning" effect="plain">模型：{{ diamond.models ?? '-' }}</el-tag>
+        <el-tag type="warning" effect="plain">智能体：{{ diamond.workflows ?? '-' }}</el-tag>
         <span class="provider-bar__hint">默认均为本地模拟，在 application.yml 配置 wimo.* 即可切换真实服务</span>
         <div class="provider-bar__right">
           <el-radio-group v-model="days" size="small" @change="loadData">
@@ -69,6 +82,9 @@
         <el-table-column label="结果" align="center" width="80">
           <template #default="scope">{{ scope.row.resultCount || 0 }} 个</template>
         </el-table-column>
+        <el-table-column label="消耗钻石" align="center" width="95">
+          <template #default="scope"><span class="cost-cell">{{ scope.row.costDiamonds || 0 }}</span></template>
+        </el-table-column>
         <el-table-column label="耗时" align="center" width="90">
           <template #default="scope">{{ formatCost(scope.row.costMs) }}</template>
         </el-table-column>
@@ -87,6 +103,7 @@ const loading = ref(false)
 const days = ref(7)
 const overview = ref({})
 const providers = ref({})
+const diamond = ref({})
 const recent = ref([])
 const typeMap = ref({})
 const statusChartRef = ref(null)
@@ -108,6 +125,16 @@ const cards = computed(() => {
     { label: '失败 / 生成中', value: Number(o.failed || 0) + ' / ' + Number(o.running || 0), sub: '需关注的任务', color: '#f56c6c' },
     { label: '注册会员', value: Number(o.users || 0), sub: '平均耗时 ' + (o.avgCost ? (o.avgCost / 1000).toFixed(1) + 's' : '-'), color: '#909399' },
     { label: '模板 / 邮件', value: Number(o.schemas || 0) + ' / ' + Number(o.mailLogs || 0), sub: '功能模板 / 验证码日志', color: '#909399' }
+  ]
+})
+
+const diamondCards = computed(() => {
+  const d = diamond.value || {}
+  return [
+    { label: '累计消耗钻石', value: Number(d.used || 0), sub: '用户实际生成扣减', color: '#d97706' },
+    { label: '累计发放钻石', value: Number(d.total || 0), sub: '注册赠送 + 充值', color: '#16a34a' },
+    { label: '冻结中钻石', value: Number(d.frozen || 0), sub: '生成中的任务预扣', color: '#0284c7' },
+    { label: '流水记录', value: Number(d.logCount || 0), sub: '全部钻石变动次数', color: '#909399' }
   ]
 })
 
@@ -194,6 +221,7 @@ async function loadData() {
     const d = res.data || {}
     overview.value = d.overview || {}
     providers.value = d.providers || {}
+    diamond.value = d.diamond || {}
     recent.value = d.recent || []
     await nextTick()
     renderCharts(d.byType || [], d.trend || [])
@@ -229,4 +257,5 @@ function onResize() { charts.forEach(c => c.resize()) }
 .chart-box { height: 260px; width: 100%; }
 .card-head { display: flex; justify-content: space-between; align-items: center; }
 .card-head__sub { font-size: 12px; color: #909399; font-weight: normal; }
+.cost-cell { color: #d97706; font-weight: 700; font-variant-numeric: tabular-nums; }
 </style>

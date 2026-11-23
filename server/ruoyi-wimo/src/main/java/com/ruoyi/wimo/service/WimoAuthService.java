@@ -49,6 +49,9 @@ public class WimoAuthService
     @Autowired
     private WimoMailSender mailSender;
 
+    @Autowired
+    private WimoDiamondService diamondService;
+
     /** 发送邮箱验证码（带频控，mock 模式返回演示码） */
     public Map<String, Object> sendCode(String rawEmail, String scene)
     {
@@ -136,10 +139,16 @@ public class WimoAuthService
         u.setNickname(email.substring(0, email.indexOf('@')));
         u.setStatus("0");
         u.setAgreed("1");
+        u.setDiamondBalance(0L);
+        u.setDiamondFrozen(0L);
+        u.setDiamondTotal(0L);
+        u.setDiamondUsed(0L);
         u.setCreateTime(new Date());
         u.setUpdateTime(u.getCreateTime());
         userMapper.insertUser(u);
-        return issue(u);
+        // 注册赠送体验钻石（写 gift 流水）
+        diamondService.giftOnRegister(u.getUserId());
+        return issue(userMapper.selectById(u.getUserId()));
     }
 
     /** 密码登录 */
@@ -209,6 +218,10 @@ public class WimoAuthService
         m.put("email", u.getEmail());
         m.put("nickname", u.getNickname());
         m.put("createTime", u.getCreateTime());
+        m.put("diamonds", u.getDiamondBalance() == null ? 0L : u.getDiamondBalance());
+        m.put("diamondFrozen", u.getDiamondFrozen() == null ? 0L : u.getDiamondFrozen());
+        m.put("diamondTotal", u.getDiamondTotal() == null ? 0L : u.getDiamondTotal());
+        m.put("diamondUsed", u.getDiamondUsed() == null ? 0L : u.getDiamondUsed());
         return m;
     }
 
@@ -234,6 +247,8 @@ public class WimoAuthService
         m.put("userId", u.getUserId());
         m.put("email", u.getEmail());
         m.put("nickname", u.getNickname());
+        m.put("diamonds", u.getDiamondBalance() == null ? 0L : u.getDiamondBalance());
+        m.put("diamondFrozen", u.getDiamondFrozen() == null ? 0L : u.getDiamondFrozen());
         m.put("expiresIn", props.getTokenDays() * 86400);
         return m;
     }

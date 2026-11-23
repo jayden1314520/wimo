@@ -1,21 +1,25 @@
 # 映物 VIVID
 
-AI 电商视觉生成平台。**13 个功能**的表单驱动生成闭环，从用户端到后端到管理端全部可本地跑通。
+AI 电商视觉生成平台。**13 个功能 = 13 个智能体工作流**的表单驱动生成闭环，含**模型管理、钻石计费、七牛云 / Cloudflare R2 对象存储**，从用户端到后端到管理端全部可本地跑通。
 
 ```
 wimogen-platform/
-├── web/                 # 用户端 · Nuxt 3（SSR / 中英双语 / SEO / 可静态部署）
+├── web/                 # 用户端 · Nuxt 3（SSR / 中英双语 / SEO / 可静态部署 / 钻石预估）
 ├── server/              # 后端 · 若依 RuoYi-Vue（Spring Boot + MyBatis + MySQL + Redis）
-│   ├── ruoyi-wimo/      # 映物业务模块（账号、任务、模板、看板、适配器）
-│   ├── sql/wimo.sql     # 5 张业务表 + 9 个菜单 + 8 条字典
+│   ├── ruoyi-wimo/      # 映物业务模块（账号、工作流引擎、计费、钻石、模型、模板、看板、适配器）
+│   ├── sql/wimo.sql     # 8 张业务表 + 16 个菜单 + 5 类字典（全新库）
+│   ├── upgrade/         # wimo_upgrade.sql 旧库增量升级（幂等，不清数据）
 │   └── Dockerfile
-├── admin/               # 管理端 · 若依 Vue3（任务管理 / 数据看板 / 模板配置 / 邮件日志）
+├── admin/               # 管理端 · 若依 Vue3（任务 / 看板 / 模板 / 邮件 / 模型 / 工作流 / 钻石）
 ├── deploy/              # 前端容器化 Dockerfile 与 nginx 配置
 ├── docs/API.md          # 完整接口文档
+├── docs/LOCAL_RUN.md    # ★ 本地运行 + 七牛/R2/模型/智能体/钻石体系设计说明
 ├── scripts/start-local.sh
 ├── docker-compose.yml   # MySQL + Redis + Spring Boot（+ 可选前端 profile）
 └── README.md
 ```
+
+> **📘 想在本地把项目跑起来，直接看 [docs/LOCAL_RUN.md](docs/LOCAL_RUN.md)**：包含一键脚本、Docker Compose、手动逐端启动、默认账号、七牛/R2 凭证配置、模型/智能体/钻石如何配、常见坑。
 
 ## 快速开始
 
@@ -118,6 +122,12 @@ NUXT_APP_BASE_URL=/wimo/ npx nuxt generate
 | AI 帮写 | 规则模板生成中英结构化卖点文案，可替换真实 LLM |
 | 归属隔离 | 登录用户只能操作自己的任务；未登录仅可访问匿名任务 |
 | 令牌隔离 | 会员令牌走 `X-Wimo-Token`，避免若依后台 JWT 过滤器误解析 UUID |
+| 智能体工作流 | **一个菜单 = 一个工作流**：13 个智能体各有能力/模型池/计费规则/执行步骤，共用统一引擎 `WimoWorkflowEngine`（模板校验 → 装载智能体 → 计价 → 预扣 → 落库 → 异步执行） |
+| 钻石计费 | `WimoBillingEngine`：`clamp(ceil((基础价 + 单位单价×单位数) × Π维度倍率 × 模型倍率), min, max)`；视频按秒 + 清晰度 + 模型，图片按张 + 清晰度/画质 + 模型 |
+| 钻石账户 | `WimoDiamondService` 两阶段结算（预扣 → 成功扣减 / 失败·取消退还），原子 UPDATE 防超扣、全量流水留痕、余额不足拒绝下单、重试不重复扣费 |
+| 计费快照 | 每单把完整计费明细写 `wimo_task.billing_snapshot`，改规则不影响历史账单，管理端详情可追溯 |
+
+> 完整设计说明与本地运行步骤见 **[docs/LOCAL_RUN.md](docs/LOCAL_RUN.md)**。
 
 ### 可插拔适配器（默认全本地模拟）
 
@@ -130,15 +140,18 @@ NUXT_APP_BASE_URL=/wimo/ npx nuxt generate
 wimo:
   mail:      { provider: mock, http-endpoint: '', http-token: '' }
   generator: { provider: mock, remote-url: '', remote-token: '', step-ms: 350, result-count: 4 }
-  storage:   { provider: local }
+  storage:   { provider: local }   # local | qiniu | r2 | remote
+  diamond:   { register-gift: 100, charge-anonymous: false }
   auth:      { code-ttl: 300, code-limit-seconds: 60, token-days: 7, demo-code: '' }
 ```
 
 | 想接什么 | 怎么改 |
 | --- | --- |
 | 真实邮件（SMTP / 邮件 API） | `wimo.mail.provider=http` + `http-endpoint`；或自行实现 `WimoMailSender` Bean |
-| 真实生图 / 生视频模型 | `wimo.generator.provider=remote` + `remote-url`，网关返回 `{"results":["url",...]}` |
-| 对象存储 | `wimo.storage.provider=remote`，实现 `WimoStorage` |
+| 真实生图 / 生视频模型 | `wimo.generator.provider=remote` + `remote-url`，网关返回 `{"results":["url",...]}`；模型清单在管理端「模型管理」按四类能力配置 |
+| **七牛云 Kodo** | `wimo.storage.provider=qiniu` + `qiniu.access-key/secret-key/bucket/domain`（凭证与区域说明见 LOCAL_RUN.md §6） |
+| **Cloudflare R2** | `wimo.storage.provider=r2` + `r2.account-id/access-key/secret-key/bucket/public-domain`（S3 SigV4，纯 JDK 实现） |
+| 其他对象存储 | `wimo.storage.provider=remote`，实现 `WimoStorage` |
 
 > 生产环境务必把 `wimo.auth.demo-code` 留空并切换真实邮件通道，
 > 否则 `/api/wimo/auth/code` 会把验证码通过 `demoCode` 回显。
@@ -149,14 +162,17 @@ wimo:
 
 ## 管理端 `admin/`
 
-若依后台左侧「映物业务」目录（菜单 `2000–2008`）：
+若依后台左侧「映物业务」目录（菜单 `2000–2015`）：
 
 | 页面 | 路由 | 能力 |
 | --- | --- | --- |
-| 任务管理 | `/wimo/task` | 按标题/功能/状态筛选、真分页、详情（素材 + 结果 + 提交参数 JSON）、重试、取消、删除 |
-| 数据看板 | `/wimo/dashboard` | 6 张统计卡、状态分布饼图、功能分布柱状图、趋势折线、适配器状态、最近任务；可切近 7/14/30 天 |
+| 任务管理 | `/wimo/task` | 按标题/功能/状态筛选、真分页、详情（素材 + 结果 + 提交参数 JSON + **计费快照 + 消耗钻石 + 结算状态**）、重试、取消、删除 |
+| 数据看板 | `/wimo/dashboard` | 6 张统计卡 + **4 张钻石卡**、状态分布饼图、功能分布柱状图、趋势折线、适配器状态、最近任务（含消耗钻石列） |
 | 模板配置 | `/wimo/schema` | 13 个模板的启停开关、改名、排序、schema JSON 在线编辑（带 JSON 合法性校验） |
 | 邮件日志 | `/wimo/mail` | 按邮箱/场景筛选、分页、验证码与发送结果 |
+| **模型管理** | `/wimo/model` | 文生图/图生图/图生视频/文生视频四类模型 CRUD、启停、计费倍率、endpoint、默认参数 JSON |
+| **智能体工作流** | `/wimo/workflow` | 13 个菜单的基础价/计费单位/单位单价/维度倍率 JSON/上下限/模型池/执行步骤/启停，改完用户端即时生效 |
+| **钻石管理** | `/wimo/diamond` | 会员钱包、钻石流水（按类型/会员筛选分页）、人工赠送/扣减、总览卡片 |
 
 ---
 

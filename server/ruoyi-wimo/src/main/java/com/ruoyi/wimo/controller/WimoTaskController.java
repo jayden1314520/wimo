@@ -24,6 +24,7 @@ import com.ruoyi.wimo.domain.dto.WimoTaskSubmit;
 import com.ruoyi.wimo.exception.WimoException;
 import com.ruoyi.wimo.service.IWimoTaskService;
 import com.ruoyi.wimo.service.WimoAuthContext;
+import com.ruoyi.wimo.service.WimoDiamondService;
 
 /**
  * 用户端 · 生成任务接口
@@ -40,6 +41,9 @@ public class WimoTaskController extends WimoApiSupport
 
     @Autowired
     private IWimoTaskService taskService;
+
+    @Autowired
+    private WimoDiamondService diamondService;
 
     @Autowired
     private WimoStorage storage;
@@ -74,6 +78,9 @@ public class WimoTaskController extends WimoApiSupport
             m.put("taskId", t.getTaskId());
             m.put("status", t.getStatus());
             m.put("taskType", t.getTaskType());
+            m.put("costDiamonds", t.getCostDiamonds() == null ? 0L : t.getCostDiamonds());
+            m.put("modelKey", t.getModelKey());
+            m.put("balance", diamondService.balanceOf(WimoAuthContext.getUserId()).get("balance"));
             return m;
         });
     }

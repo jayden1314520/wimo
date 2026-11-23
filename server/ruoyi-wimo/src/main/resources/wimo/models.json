@@ -1,0 +1,123 @@
+[
+  {
+    "modelKey": "wimo2",
+    "nameZh": "映物图像 2.0 标准",
+    "nameEn": "VIVID Image 2.0 Standard",
+    "capability": "img2img",
+    "provider": "mock",
+    "costMultiplier": 1.00,
+    "configJson": "{\"maxImages\":8,\"resolutions\":[\"2k\",\"4k\"]}",
+    "sortNo": 1,
+    "remark": "图生图默认模型"
+  },
+  {
+    "modelKey": "wimo2pro",
+    "nameZh": "映物图像 2.0 Pro",
+    "nameEn": "VIVID Image 2.0 Pro",
+    "capability": "img2img",
+    "provider": "mock",
+    "costMultiplier": 1.60,
+    "configJson": "{\"maxImages\":8,\"resolutions\":[\"2k\",\"4k\"],\"detail\":\"high\"}",
+    "sortNo": 2,
+    "remark": "图生图高精度模型，计费倍率 1.6"
+  },
+  {
+    "modelKey": "wimo-t2i",
+    "nameZh": "映物文生图 标准",
+    "nameEn": "VIVID Text-to-Image Standard",
+    "capability": "text2img",
+    "provider": "mock",
+    "costMultiplier": 1.00,
+    "configJson": "{\"maxImages\":4,\"resolutions\":[\"2k\",\"4k\"]}",
+    "sortNo": 3,
+    "remark": "纯文案生成图片"
+  },
+  {
+    "modelKey": "wimo-t2i-pro",
+    "nameZh": "映物文生图 Pro",
+    "nameEn": "VIVID Text-to-Image Pro",
+    "capability": "text2img",
+    "provider": "mock",
+    "costMultiplier": 1.80,
+    "configJson": "{\"maxImages\":4,\"resolutions\":[\"2k\",\"4k\"]}",
+    "sortNo": 4,
+    "remark": "文生图高精度模型"
+  },
+  {
+    "modelKey": "seedance2fast",
+    "nameZh": "Seedance 2.0 极速",
+    "nameEn": "Seedance 2.0 Fast",
+    "capability": "img2video",
+    "provider": "mock",
+    "costMultiplier": 1.00,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
+    "sortNo": 5,
+    "remark": "图生视频默认模型"
+  },
+  {
+    "modelKey": "seedance25flash",
+    "nameZh": "Seedance 2.5 Flash",
+    "nameEn": "Seedance 2.5 Flash",
+    "capability": "img2video",
+    "provider": "mock",
+    "costMultiplier": 1.20,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
+    "sortNo": 6,
+    "remark": ""
+  },
+  {
+    "modelKey": "seedance20mini",
+    "nameZh": "Seedance 2.0 Mini",
+    "nameEn": "Seedance 2.0 Mini",
+    "capability": "img2video",
+    "provider": "mock",
+    "costMultiplier": 0.80,
+    "configJson": "{\"maxDuration\":30,\"resolutions\":[\"480p\",\"720p\"]}",
+    "sortNo": 7,
+    "remark": "低清短视频经济模型"
+  },
+  {
+    "modelKey": "seedance20",
+    "nameZh": "Seedance 2.0",
+    "nameEn": "Seedance 2.0",
+    "capability": "img2video",
+    "provider": "mock",
+    "costMultiplier": 1.40,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
+    "sortNo": 8,
+    "remark": ""
+  },
+  {
+    "modelKey": "seedance25",
+    "nameZh": "Seedance 2.5 Pro",
+    "nameEn": "Seedance 2.5 Pro",
+    "capability": "img2video",
+    "provider": "mock",
+    "costMultiplier": 2.00,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
+    "sortNo": 9,
+    "remark": "图生视频旗舰模型，计费倍率 2.0"
+  },
+  {
+    "modelKey": "wimo-t2v",
+    "nameZh": "映物文生视频 标准",
+    "nameEn": "VIVID Text-to-Video Standard",
+    "capability": "text2video",
+    "provider": "mock",
+    "costMultiplier": 1.00,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\"]}",
+    "sortNo": 10,
+    "remark": "纯文案生成视频"
+  },
+  {
+    "modelKey": "wimo-t2v-pro",
+    "nameZh": "映物文生视频 Pro",
+    "nameEn": "VIVID Text-to-Video Pro",
+    "capability": "text2video",
+    "provider": "mock",
+    "costMultiplier": 2.20,
+    "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
+    "sortNo": 11,
+    "remark": "文生视频旗舰模型"
+  }
+]

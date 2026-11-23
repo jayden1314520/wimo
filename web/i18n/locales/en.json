@@ -27,7 +27,8 @@
       "productVideo": "Product Showcase",
       "salesVideo": "Sales Video",
       "storeVisit": "Store Visit"
-    }
+    },
+    "diamondHint": "Diamond balance: cost varies by workflow, resolution, duration and model"
   },
   "form": {
     "title": "Product Set",
@@ -53,7 +54,8 @@
       "cameraStyle": "Camera style",
       "videoResolution": "Resolution",
       "duration": "Duration",
-      "videoModel": "Model"
+      "videoModel": "Model",
+      "resultCount": "Result count"
     },
     "resultLabel": "Output set",
     "resultDefault": "Default",
@@ -103,7 +105,12 @@
     },
     "hint": {
       "dishes": "{min}–{max} dishes supported"
-    }
+    },
+    "costLabel": "Estimated cost",
+    "costUnit": "diamonds",
+    "costCalculating": "Calculating…",
+    "costNotEnough": "Insufficient balance: need {need}, you have {balance} diamonds",
+    "costCharged": "{n} diamonds reserved; refunded automatically if generation fails"
   },
   "options": {
     "platform": {

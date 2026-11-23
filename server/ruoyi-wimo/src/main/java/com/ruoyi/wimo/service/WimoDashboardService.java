@@ -10,9 +10,11 @@ import com.ruoyi.wimo.adapter.WimoMailSender;
 import com.ruoyi.wimo.adapter.WimoStorage;
 import com.ruoyi.wimo.domain.WimoTask;
 import com.ruoyi.wimo.mapper.WimoMailLogMapper;
+import com.ruoyi.wimo.mapper.WimoModelMapper;
 import com.ruoyi.wimo.mapper.WimoSchemaMapper;
 import com.ruoyi.wimo.mapper.WimoTaskMapper;
 import com.ruoyi.wimo.mapper.WimoUserMapper;
+import com.ruoyi.wimo.mapper.WimoWorkflowMapper;
 
 /** 管理端数据看板：总览指标、状态/功能分布、趋势、最近任务、适配器状态 */
 @Service
@@ -26,6 +28,9 @@ public class WimoDashboardService
     @Autowired private WimoGenerator generator;
     @Autowired private WimoMailSender mailSender;
     @Autowired private WimoStorage storage;
+    @Autowired private WimoDiamondService diamondService;
+    @Autowired private WimoModelMapper modelMapper;
+    @Autowired private WimoWorkflowMapper workflowMapper;
 
     public Map<String, Object> full(int days)
     {
@@ -61,6 +66,12 @@ public class WimoDashboardService
         out.put("overview", ov);
         out.put("byType", taskMapper.countByType());
         out.put("trend", taskMapper.trendByDay(Math.max(1, Math.min(90, days))));
+
+        // 钻石消耗与配置规模
+        Map<String, Object> diamond = diamondService.overview();
+        diamond.put("models", modelMapper.countAll());
+        diamond.put("workflows", workflowMapper.countAll());
+        out.put("diamond", diamond);
 
         WimoTask q = new WimoTask();
         q.setStatus("");

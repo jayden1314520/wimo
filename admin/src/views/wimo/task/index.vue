@@ -83,6 +83,9 @@
         <el-descriptions-item label="重试次数">{{ detail.retryCount || 0 }}</el-descriptions-item>
         <el-descriptions-item label="耗时">{{ formatCost(detail.costMs) }}</el-descriptions-item>
         <el-descriptions-item label="完成时间">{{ detail.finishTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="消耗钻石"><b style="color:#d97706">{{ detail.costDiamonds || 0 }}</b></el-descriptions-item>
+        <el-descriptions-item label="计费状态">{{ diamondStateName(detail.diamondState) }}</el-descriptions-item>
+        <el-descriptions-item label="模型">{{ detail.modelKey || detail.model || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="3">{{ detail.createTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="任务标题" :span="3">{{ detail.title || detail.productName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="卖点/要求" :span="3">
@@ -106,6 +109,9 @@
         <el-image v-for="(img, i) in splitImages(detail.results)" :key="'r' + i" :src="assetUrl(img)" :preview-src-list="splitImages(detail.results).map(assetUrl)" :initial-index="i" fit="cover" class="img-item" preview-teleported />
         <span v-if="!splitImages(detail.results).length" class="img-empty">{{ detail.status === '3' ? '生成失败' : detail.status === '4' ? '已取消' : '暂无结果' }}</span>
       </div>
+
+      <el-divider content-position="left">计费快照（下单时的规则明细，规则改动不影响历史账单）</el-divider>
+      <pre class="payload-box">{{ prettyPayload(detail.billingSnapshot) }}</pre>
 
       <el-divider content-position="left">提交参数</el-divider>
       <pre class="payload-box">{{ prettyPayload(detail.payload) }}</pre>
@@ -175,6 +181,9 @@ function assetUrl(v) {
 function prettyPayload(v) {
   if (!v) return '-'
   try { return JSON.stringify(JSON.parse(v), null, 2) } catch { return v }
+}
+function diamondStateName(v) {
+  return { '0': '已冻结（待结算）', '1': '已扣减', '2': '已退还', '9': '不计费（匿名演示）' }[v] || v || '-'
 }
 
 // 从后端模板配置动态补全功能名，保证新增模板后管理端也能正确显示
