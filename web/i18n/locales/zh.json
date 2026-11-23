@@ -33,7 +33,7 @@
     "title": "商品套图",
     "newTask": "新建任务",
     "uploadLabel": "上传商品图",
-    "uploadLimit": "最多 6 个素材",
+    "uploadLimit": "最多 {n} 个素材",
     "uploadHint": "点击上传，支持 JPG / PNG",
     "sellingLabel": "商品卖点 & 要求",
     "sellingPlaceholder": "建议包含以下信息，生成更精准：\n1. 商品名称\n2. 核心卖点\n3. 适用人群\n4. 期望场景",
@@ -58,15 +58,83 @@
     "submitting": "生成中…",
     "required": "必填",
     "edit": "修改",
-    "aiExample": "1. 商品名称：Maison Talon 尖头细跟高跟鞋\n2. 核心卖点：8cm 舒适细跟、小羊皮内里、防滑耐磨\n3. 适用人群：25-35 岁职场女性\n4. 期望场景：都市夜景街拍，车灯暖光，高级质感"
+    "aiExample": "1. 商品名称：Maison Talon 尖头细跟高跟鞋\n2. 核心卖点：8cm 舒适细跟、小羊皮内里、防滑耐磨\n3. 适用人群：25-35 岁职场女性\n4. 期望场景：都市夜景街拍，车灯暖光，高级质感",
+    "upload": {
+      "product": "上传商品图",
+      "apparel": "上传服饰图",
+      "model": "上传原模特图",
+      "reference": "上传参考图",
+      "sceneRef": "场景图来源",
+      "modelRef": "模特图来源",
+      "target": "目标图来源"
+    },
+    "field": {
+      "sellingPoints": "商品卖点 & 要求",
+      "pageStyle": "页面风格",
+      "replicaType": "复刻类型",
+      "replicaLevel": "复刻程度",
+      "count": "生成数量",
+      "retouchNote": "修改要求",
+      "posterTheme": "海报主题",
+      "promo": "促销信息",
+      "activityStart": "活动开始时间",
+      "activityEnd": "活动结束时间"
+    },
+    "ph": {
+      "sellingPoints": "建议包含以下信息，生成更精准：\n1. 商品名称\n2. 核心卖点\n3. 适用人群",
+      "retouchNote": "请描述需要修改的内容，如：换背景为纯白色、去除褶皱",
+      "posterTheme": "请输入海报主题",
+      "promo": "请输入促销信息，如：限时 5 折 / 满 300 减 80",
+      "count": "请输入生成数量"
+    }
   },
   "options": {
-    "platform": { "taobao": "淘宝", "jd": "京东", "pdd": "拼多多", "douyin": "抖音" },
-    "region": { "cn": "中国", "us": "美国", "jp": "日本", "eu": "欧洲" },
-    "language": { "zh": "中文", "en": "英文", "ja": "日文" },
-    "resolution": { "2k": "2K", "4k": "4K" },
-    "quality": { "low": "低", "mid": "中", "high": "高" },
-    "model": { "wimo2": "Wimo Image 2", "wimo2pro": "Wimo Image 2 Pro" }
+    "platform": {
+      "taobao": "淘宝",
+      "jd": "京东",
+      "pdd": "拼多多",
+      "douyin": "抖音"
+    },
+    "region": {
+      "cn": "中国",
+      "us": "美国",
+      "jp": "日本",
+      "eu": "欧洲"
+    },
+    "language": {
+      "zh": "中文",
+      "en": "英文",
+      "ja": "日文"
+    },
+    "resolution": {
+      "2k": "2K",
+      "4k": "4K"
+    },
+    "quality": {
+      "low": "低",
+      "mid": "中",
+      "high": "高"
+    },
+    "model": {
+      "wimo2": "Wimo Image 2",
+      "wimo2pro": "Wimo Image 2 Pro"
+    },
+    "pageStyle": {
+      "minimal": "简约风",
+      "premium": "高级感",
+      "marketing": "营销风",
+      "editorial": "杂志风"
+    },
+    "replicaType": {
+      "layout": "版式复刻",
+      "style": "风格复刻",
+      "full": "整体复刻"
+    },
+    "replicaLevel": {
+      "loose": "参考借鉴",
+      "balanced": "中度还原",
+      "strict": "严格复刻"
+    }
   },
   "preview": {
     "title": "Maison Talon",

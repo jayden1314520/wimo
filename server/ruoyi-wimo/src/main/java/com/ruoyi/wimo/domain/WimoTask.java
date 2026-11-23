@@ -18,6 +18,9 @@ public class WimoTask
     /** 用户ID（未登录为 0） */
     private Long userId;
 
+    /** 任务类型（productSet/productDetail/hotReplica/scene/retouch/poster/flatLay/modelTryon/anythingWear/swapModel） */
+    private String taskType;
+
     /** 商品名称 */
     private String productName;
 
@@ -59,6 +62,9 @@ public class WimoTask
 
     /** 结果图（逗号分隔的图片标识） */
     private String results;
+
+    /** 扩展参数（JSON: uploads/values） */
+    private String extra;
 
     /** 失败原因 */
     private String errorMsg;

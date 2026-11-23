@@ -1,20 +1,29 @@
 <template>
   <AppSidebar :active="active" @select="onSelect" />
 
-  <div v-if="active === 'productSet'" class="main">
-    <TaskForm :generating="generating" @submit="onSubmit" />
-    <PreviewPanel
-      :items="displayItems"
-      :generating="generating"
-      :progress="progress"
-      :has-result="!!result"
-      @records="openRecords"
-    />
-  </div>
+  <div class="main">
+    <template v-if="isVideo">
+      <div class="empty-page">
+        <AppIcon :name="active === 'productVideo' ? 'video' : 'cart'" :size="26" />
+        <p>{{ t('common.comingSoon') }}</p>
+      </div>
+    </template>
 
-  <div v-else class="empty-page">
-    <AppIcon name="grid" :size="26" />
-    <p>{{ t('common.comingSoon') }}</p>
+    <template v-else>
+      <TaskForm
+        :key="active"
+        :generating="generating"
+        :schema-key="active"
+        @submit="onSubmit"
+      />
+      <PreviewPanel
+        :items="displayItems"
+        :generating="generating"
+        :progress="progress"
+        :has-result="!!result"
+        @records="openRecords"
+      />
+    </template>
   </div>
 
   <RecordsDrawer :open="recordsOpen" :records="records" @close="recordsOpen = false" />
@@ -23,8 +32,25 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
 
+const VIDEO_KEYS = ['productVideo', 'salesVideo']
 const active = ref('productSet')
 const recordsOpen = ref(false)
+
+const isVideo = computed(() => VIDEO_KEYS.includes(active.value))
+
+/* 侧栏切换：同步 URL query，刷新/分享可还原功能选择 */
+const router = useRouter()
+const route = useRoute()
+
+onMounted(() => {
+  const q = route.query.task as string
+  if (q) active.value = q
+})
+
+function onSelect(key: string) {
+  active.value = key
+  router.replace({ query: { ...route.query, task: key } })
+}
 
 /* ---------------- SEO ---------------- */
 const requestURL = useRequestURL()
@@ -72,10 +98,6 @@ const displayItems = computed(() => result.value ?? SAMPLE)
 
 const previewUrl = (key: string) => `/images/preview/${key}.jpg`
 
-function onSelect(key: string) {
-  active.value = key
-}
-
 async function openRecords() {
   recordsOpen.value = true
   try {
@@ -83,7 +105,7 @@ async function openRecords() {
     records.value = list.map(r => ({
       id: r.taskId,
       time: r.createTime,
-      summary: (r.sellingPoints || '').slice(0, 44),
+      summary: (r.sellingPoints || r.productName || '').slice(0, 44),
       images: (r.results || '').split(',').filter(Boolean).slice(0, 4).map(previewUrl)
     }))
   } catch {
@@ -91,11 +113,20 @@ async function openRecords() {
   }
 }
 
+/* 从 payload 提取一句可读摘要 */
+function summarize(payload: any): string {
+  const v = payload.values || {}
+  const candidates = [v.sellingPoints, v.retouchNote, v.posterTheme, v.promo]
+  const text = candidates.find((s: any) => s && String(s).trim()) || ''
+  const firstLine = String(text).split('\n')[0] || ''
+  return firstLine.slice(0, 100)
+}
+
 function localMock(payload: any) {
   records.value.unshift({
     id: Date.now(),
     time: new Date().toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US'),
-    summary: payload.text.slice(0, 44),
+    summary: summarize(payload),
     images: SAMPLE.slice(0, 4)
   })
 }
@@ -107,10 +138,10 @@ async function onSubmit(payload: any) {
   recordsOpen.value = false
 
   try {
-    const firstLine = String(payload.text || '').split('\n')[0] || ''
     const task = await api.createTask({
-      productName: firstLine.replace(/^1[.、\s]*/, '').slice(0, 100),
-      sellingPoints: payload.text,
+      taskType: payload.taskType,
+      productName: summarize(payload),
+      sellingPoints: summarize(payload),
       ratio: payload.ratio,
       platform: payload.platform,
       region: payload.region,
@@ -119,7 +150,8 @@ async function onSubmit(payload: any) {
       quality: payload.quality,
       model: payload.model,
       resultMode: payload.resultMode,
-      images: payload.images
+      images: (payload.uploads.product || payload.uploads.apparel || payload.uploads.model || []).join(','),
+      extra: JSON.stringify({ uploads: payload.uploads, values: payload.values })
     })
 
     const startedAt = Date.now()

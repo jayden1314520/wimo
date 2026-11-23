@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="com.ruoyi.wimo.domain.WimoTask" id="WimoTaskResult">
         <id     property="taskId"        column="task_id"       />
         <result property="userId"        column="user_id"       />
+        <result property="taskType"      column="task_type"     />
         <result property="productName"   column="product_name"  />
         <result property="sellingPoints" column="selling_points"/>
         <result property="ratio"         column="ratio"         />
@@ -21,27 +22,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"        column="status"        />
         <result property="progress"      column="progress"      />
         <result property="results"       column="results"       />
+        <result property="extra"         column="extra"         />
         <result property="errorMsg"      column="error_msg"     />
         <result property="createTime"    column="create_time"   />
         <result property="updateTime"    column="update_time"   />
     </resultMap>
 
     <sql id="selectTaskVo">
-        select task_id, user_id, product_name, selling_points, ratio, platform, region, lang,
-               resolution, quality, model, result_mode, images, status, progress, results,
+        select task_id, user_id, task_type, product_name, selling_points, ratio, platform, region, lang,
+               resolution, quality, model, result_mode, images, status, progress, results, extra,
                error_msg, create_time, update_time
         from wimo_task
     </sql>
 
     <insert id="insertTask" parameterType="com.ruoyi.wimo.domain.WimoTask" useGeneratedKeys="true" keyProperty="taskId">
         insert into wimo_task (
-            user_id, product_name, selling_points, ratio, platform, region, lang,
+            user_id, task_type, product_name, selling_points, ratio, platform, region, lang,
             resolution, quality, model, result_mode, images, status, progress,
-            error_msg, create_time, update_time
+            extra, error_msg, create_time, update_time
         ) values (
-            #{userId}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
+            #{userId}, #{taskType}, #{productName}, #{sellingPoints}, #{ratio}, #{platform}, #{region}, #{lang},
             #{resolution}, #{quality}, #{model}, #{resultMode}, #{images}, #{status}, #{progress},
-            #{errorMsg}, #{createTime}, #{updateTime}
+            #{extra}, #{errorMsg}, #{createTime}, #{updateTime}
         )
     </insert>
 

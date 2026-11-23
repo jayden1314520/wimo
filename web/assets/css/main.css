@@ -398,3 +398,19 @@ ul { list-style: none; }
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* 数字 / 时间输入（schema 驱动表单） */
+.number-input,
+.datetime-input {
+  width: 100%;
+  border: none; outline: none;
+  background: var(--c-fill);
+  border-radius: var(--radius-s);
+  padding: 10px 12px;
+  font-size: 13px; color: var(--c-text);
+  font-family: inherit;
+}
+.datetime-input::-webkit-calendar-picker-indicator { cursor: pointer; }
+
+.field--half-row { display: inline-block; width: calc(50% - 6px); vertical-align: top; margin-right: 12px; }
+.field--half-row + .field--half-row { margin-right: 0; }
