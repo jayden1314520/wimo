@@ -26,6 +26,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* 禁止 iOS 在横竖屏切换时自动放大文字 */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body, #__nuxt { height: 100%; }
 
 body {
@@ -751,6 +753,21 @@ ul { list-style: none; }
   .auth-card__head { margin-bottom: 18px; }
   .auth-card__logo { margin-bottom: 14px; }
   .auth-mask { align-items: center; padding: 16px; }
+
+  /* iOS Safari：输入框聚焦时若字号 < 16px 会自动放大整个页面（zoom）。
+     移动端把所有可唤起键盘的控件统一到 16px，消除聚焦时的页面跳动；
+     不禁用 maximum-scale，保留用户双指缩放能力。 */
+  .control__input,
+  .stepper__input,
+  .textarea,
+  .auth-input input,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+  /* 16px 文字下把控件高度略微抬高，保持与 PC 一致的呼吸感 */
+  .control, .stepper, .app-select__trigger { height: 40px; }
 }
 @media (max-width: 380px) {
   .auth-code-btn { padding: 0 9px; font-size: 11px; }
