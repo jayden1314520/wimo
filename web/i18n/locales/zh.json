@@ -25,7 +25,8 @@
       "anythingWear": "万物穿戴",
       "swapModel": "AI 换模特",
       "productVideo": "商品展示短片",
-      "salesVideo": "带货视频"
+      "salesVideo": "带货视频",
+      "storeVisit": "探店视频"
     }
   },
   "form": {
@@ -33,6 +34,7 @@
     "newTask": "新建任务",
     "uploadLabel": "上传商品图",
     "uploadLimit": "最多 {n} 个素材",
+    "uploadOptional": "选填",
     "uploadHint": "点击上传，支持 JPG / PNG",
     "sellingLabel": "商品卖点 & 要求",
     "sellingPlaceholder": "建议包含以下信息，生成更精准：\n1. 商品名称\n2. 核心卖点\n3. 适用人群\n4. 期望场景",
@@ -70,7 +72,11 @@
       "reference": "上传参考图",
       "sceneRef": "场景图来源",
       "modelRef": "模特图来源",
-      "target": "目标图来源"
+      "target": "目标图来源",
+      "storefront": "店铺门头照片",
+      "storeEnv": "店铺环境照片",
+      "dishes": "菜品照片",
+      "blogger": "博主人物照片"
     },
     "field": {
       "sellingPoints": "商品卖点 & 要求",
@@ -82,14 +88,21 @@
       "posterTheme": "海报主题",
       "promo": "促销信息",
       "activityStart": "活动开始时间",
-      "activityEnd": "活动结束时间"
+      "activityEnd": "活动结束时间",
+      "storeName": "店铺名称",
+      "location": "位置信息"
     },
     "ph": {
       "sellingPoints": "建议包含以下信息，生成更精准：\n1. 商品名称\n2. 核心卖点\n3. 适用人群",
       "retouchNote": "请描述需要修改的内容，如：换背景为纯白色、去除褶皱",
       "posterTheme": "请输入海报主题",
       "promo": "请输入促销信息，如：限时 5 折 / 满 300 减 80",
-      "count": "请输入生成数量"
+      "count": "请输入生成数量",
+      "storeName": "请输入店铺名称，如：巷子里·川菜小馆",
+      "location": "请输入位置信息，如：上海市静安区愚园路 68 号"
+    },
+    "hint": {
+      "dishes": "支持 {min}–{max} 个菜品"
     }
   },
   "options": {

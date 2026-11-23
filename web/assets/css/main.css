@@ -167,6 +167,10 @@ ul { list-style: none; }
 }
 .field__label .req { color: var(--c-danger); font-size: 12px; }
 .field__label .hint { color: var(--c-text-3); font-weight: 400; margin-left: 2px; }
+.field__label .optional { color: var(--c-text-3); font-weight: 400; font-size: 11px; }
+.field__label .hint--count {
+  margin-left: auto; font-variant-numeric: tabular-nums; letter-spacing: .3px;
+}
 .field__label--sub {
   font-weight: 400; font-size: 12px; color: var(--c-text-2); margin-bottom: 7px;
 }
@@ -489,6 +493,8 @@ ul { list-style: none; }
   background: #2a2a30; color: var(--c-text);
 }
 :root[data-theme="dark"] .preview-grid__item { background: #202025; }
+/* 深色主题下预览区留白融入深色底，浅色封面作为一张展示稿自然呈现 */
+:root[data-theme="dark"] .preview-workspace { background: var(--c-sidebar); }
 :root[data-theme="dark"] .ai-btn { background: #202025; border-color: #2e2e35; }
 :root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3a3a42; }
 

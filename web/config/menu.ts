@@ -38,7 +38,8 @@ export const sidebarGroups: MenuGroup[] = [
     label: 'nav.groups.video',
     items: [
       { key: 'productVideo', icon: 'video', label: 'nav.items.productVideo' },
-      { key: 'salesVideo', icon: 'cart', label: 'nav.items.salesVideo' }
+      { key: 'salesVideo', icon: 'cart', label: 'nav.items.salesVideo' },
+      { key: 'storeVisit', icon: 'store', label: 'nav.items.storeVisit' }
     ]
   }
 ]

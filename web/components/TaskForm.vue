@@ -11,8 +11,16 @@
     <!-- 上传区（多槽位） -->
     <div v-for="slot in schema.uploads" :key="slot.key" class="field">
       <div class="field__label">
-        {{ t(`form.upload.${slot.labelKey}`) }}<span class="req">*</span>
-        <span class="hint">{{ t('form.uploadLimit', { n: slot.max }) }}</span>
+        {{ t(`form.upload.${slot.labelKey}`) }}
+        <span v-if="!slot.optional" class="req">*</span>
+        <span v-else class="optional">{{ t('form.uploadOptional') }}</span>
+        <span v-if="slot.hintKey" class="hint">
+          {{ t(`form.hint.${slot.hintKey}`, { min: slot.min || 1, max: slot.max }) }}
+        </span>
+        <span v-else-if="slot.max > 1" class="hint">{{ t('form.uploadLimit', { n: slot.max }) }}</span>
+        <span v-if="slot.max > 1" class="hint hint--count">
+          {{ uploads[slot.key].length }}/{{ slot.max }}
+        </span>
       </div>
       <div class="uploader">
         <div v-for="(asset, i) in uploads[slot.key]" :key="i" class="upload-box">
@@ -51,6 +59,15 @@
           <AppIcon name="spark" :size="13" />
           {{ writing ? t('form.aiWriting') : t('form.aiWrite') }}
         </button>
+      </div>
+
+      <!-- 单行文本：与下拉 / 日期统一的白底细边框控件 -->
+      <div v-else-if="f.type === 'text'" class="control">
+        <input
+          v-model="values[f.key]" type="text" class="control__input"
+          :placeholder="f.placeholderKey ? t(`form.ph.${f.placeholderKey}`) : ''"
+          :aria-label="t(`form.field.${f.key}`)"
+        />
       </div>
 
       <!-- 数字输入：与下拉统一的白底细边框 + 步进按钮 -->
@@ -222,11 +239,14 @@ const modelOptions = computed(() =>
   ['wimo2', 'wimo2pro'].map(v => ({ value: v, label: t(`options.model.${v}`) }))
 )
 
-/* 必填校验：首个上传槽位至少 1 张 + required 字段非空 */
+/* 必填校验：每个非选填上传槽位达到最少数量 + required 字段非空 */
 const canSubmit = computed(() => {
   const s = schema.value
-  const first = s.uploads[0]
-  if (first && uploads[first.key]?.length === 0) return false
+  for (const slot of s.uploads) {
+    if (slot.optional) continue
+    const len = uploads[slot.key]?.length ?? 0
+    if (len < (slot.min ?? 1)) return false
+  }
   return s.fields.every(f => !f.required || String(values[f.key] ?? '').trim() !== '')
 })
 

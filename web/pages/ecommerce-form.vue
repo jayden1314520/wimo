@@ -105,7 +105,7 @@ async function openRecords() {
 /* 从 payload 提取一句可读摘要 */
 function summarize(payload: any): string {
   const v = payload.values || {}
-  const candidates = [v.sellingPoints, v.retouchNote, v.posterTheme, v.promo]
+  const candidates = [v.sellingPoints, v.retouchNote, v.posterTheme, v.promo, v.storeName]
   const text = candidates.find((s: any) => s && String(s).trim()) || ''
   const firstLine = String(text).split('\n')[0] || ''
   return firstLine.slice(0, 100)
@@ -139,7 +139,7 @@ async function onSubmit(payload: any) {
       quality: payload.quality,
       model: payload.model,
       resultMode: payload.resultMode,
-      images: (payload.uploads.product || payload.uploads.apparel || payload.uploads.model || []).join(','),
+      images: ((Object.values(payload.uploads || {})[0] as string[]) || []).join(','),
       extra: JSON.stringify({ uploads: payload.uploads, values: payload.values })
     })
 

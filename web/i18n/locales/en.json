@@ -25,7 +25,8 @@
       "anythingWear": "Anything Wear",
       "swapModel": "AI Model Swap",
       "productVideo": "Product Showcase",
-      "salesVideo": "Sales Video"
+      "salesVideo": "Sales Video",
+      "storeVisit": "Store Visit"
     }
   },
   "form": {
@@ -33,6 +34,7 @@
     "newTask": "New task",
     "uploadLabel": "Upload product image",
     "uploadLimit": "Up to {n} assets",
+    "uploadOptional": "Optional",
     "uploadHint": "Click to upload, JPG / PNG",
     "sellingLabel": "Selling points & requirements",
     "sellingPlaceholder": "More details bring better results:\n1. Product name\n2. Key selling points\n3. Target audience\n4. Desired scene",
@@ -70,7 +72,11 @@
       "reference": "Upload reference image",
       "sceneRef": "Scene source",
       "modelRef": "Model source",
-      "target": "Target image source"
+      "target": "Target image source",
+      "storefront": "Storefront photo",
+      "storeEnv": "Interior / ambience photos",
+      "dishes": "Dish photos",
+      "blogger": "Influencer photo"
     },
     "field": {
       "sellingPoints": "Selling points & requirements",
@@ -82,14 +88,21 @@
       "posterTheme": "Poster theme",
       "promo": "Promotion text",
       "activityStart": "Campaign start",
-      "activityEnd": "Campaign end"
+      "activityEnd": "Campaign end",
+      "storeName": "Store name",
+      "location": "Location"
     },
     "ph": {
       "sellingPoints": "For better results, include:\n1. Product name\n2. Key selling points\n3. Target audience",
       "retouchNote": "Describe the changes, e.g. pure white background, remove wrinkles",
       "posterTheme": "Enter the poster theme",
       "promo": "e.g. 50% off today / $80 off orders over $300",
-      "count": "Enter number of outputs"
+      "count": "Enter number of outputs",
+      "storeName": "e.g. Alley Sichuan Bistro",
+      "location": "e.g. 68 Yuyuan Rd, Jing'an, Shanghai"
+    },
+    "hint": {
+      "dishes": "{min}–{max} dishes supported"
     }
   },
   "options": {
