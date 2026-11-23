@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# nuxt
+web/.nuxt/
+web/.output/
+web/.data/
+web/dist/
+
+# logs & env
+*.log
+.env
+.env.*
+!.env.example
+
+# editor & os
+.idea/
+.vscode/
+.DS_Store
+
+# java / 若依（阶段 2 预留）
+server/target/
+*.class

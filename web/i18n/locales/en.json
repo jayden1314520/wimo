@@ -1,0 +1,93 @@
+{
+  "brand": {
+    "name": "WIMO",
+    "slogan": "Redefining e-commerce visual production with AI"
+  },
+  "nav": {
+    "singleTask": "Single",
+    "batchTask": "Batch",
+    "login": "Sign in",
+    "language": "Language",
+    "theme": "Appearance",
+    "groups": {
+      "ecommerce": "E-commerce",
+      "model": "Model",
+      "video": "Video"
+    },
+    "items": {
+      "productSet": "Product Set",
+      "productDetail": "Product Detail",
+      "hotReplica": "Hot Listing Replica",
+      "scene": "Product Scene",
+      "retouch": "Product Retouch",
+      "poster": "E-commerce Poster",
+      "flatLay": "Flat Lay",
+      "modelTryon": "Model Try-on",
+      "anythingWear": "Anything Wear",
+      "swapModel": "AI Model Swap",
+      "productVideo": "Product Showcase",
+      "salesVideo": "Sales Video"
+    }
+  },
+  "form": {
+    "title": "Product Set",
+    "newTask": "New task",
+    "uploadLabel": "Upload product image",
+    "uploadLimit": "Up to 6 assets",
+    "uploadHint": "Click to upload, JPG / PNG",
+    "sellingLabel": "Selling points & requirements",
+    "sellingPlaceholder": "More details bring better results:\n1. Product name\n2. Key selling points\n3. Target audience\n4. Desired scene",
+    "aiWrite": "AI write",
+    "aiWriting": "Writing…",
+    "settingsLabel": "Generation settings",
+    "fields": {
+      "ratio": "Aspect ratio",
+      "platform": "Platform",
+      "region": "Region",
+      "language": "Language",
+      "resolution": "Resolution",
+      "quality": "Quality",
+      "model": "Model"
+    },
+    "resultLabel": "Output set",
+    "resultDefault": "Default",
+    "resultCustom": "Custom",
+    "resultDesc": "8 images in total: 1 hero on white, 3 selling-point shots, 1 size/detail shot, 1 lifestyle scene, 1 A+ banner, 1 promo shot.",
+    "resultDescCustom": "Custom output set, up to 12 images. 8 selected — adjust each type in the preview panel.",
+    "submit": "Generate now",
+    "submitting": "Generating…",
+    "required": "Required",
+    "edit": "Edit",
+    "aiExample": "1. Product name: Maison Talon pointed stiletto heels\n2. Key selling points: 8cm comfortable heel, lambskin lining, anti-slip sole\n3. Target audience: professional women aged 25-35\n4. Desired scene: urban night street, warm headlight glow, premium texture"
+  },
+  "options": {
+    "platform": { "taobao": "Taobao", "jd": "JD.com", "pdd": "Pinduoduo", "douyin": "Douyin" },
+    "region": { "cn": "China", "us": "United States", "jp": "Japan", "eu": "Europe" },
+    "language": { "zh": "Chinese", "en": "English", "ja": "Japanese" },
+    "resolution": { "2k": "2K", "4k": "4K" },
+    "quality": { "low": "Low", "mid": "Medium", "high": "High" },
+    "model": { "wimo2": "Wimo Image 2", "wimo2pro": "Wimo Image 2 Pro" }
+  },
+  "preview": {
+    "title": "Maison Talon",
+    "records": "History",
+    "empty": "Fill in the form and hit “Generate now” — your AI product set will appear here",
+    "generating": "Generating image {n}…",
+    "placeholderBadge": "Sample"
+  },
+  "records": {
+    "title": "Generation history",
+    "empty": "No records yet",
+    "status": "Completed",
+    "count": "{n} images",
+    "close": "Close"
+  },
+  "common": {
+    "comingSoon": "Coming soon"
+  },
+  "seo": {
+    "title": "Product Set · WIMO",
+    "description": "Upload one product photo and let AI generate white-background hero shots, selling-point images, lifestyle scenes, A+ banners and promo creatives for Taobao, JD and Douyin.",
+    "keywords": "AI product photography, product set, white background, e-commerce creative, WIMO"
+  }
+}

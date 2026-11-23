@@ -1,0 +1,47 @@
+export default defineNuxtConfig({
+  compatibilityDate: '2025-01-01',
+  devtools: { enabled: false },
+  ssr: true,
+
+  modules: ['@nuxtjs/i18n'],
+  css: ['~/assets/css/main.css'],
+
+  app: {
+    head: {
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'theme-color', content: '#ffffff' }
+      ],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+    }
+  },
+
+  i18n: {
+    strategy: 'prefix',            // /zh/...  /en/... 两种语言均有独立 URL，利于 SEO
+    defaultLocale: 'zh',
+    langDir: 'locales',            // 相对 i18n/ 目录
+    locales: [
+      { code: 'zh', language: 'zh-CN', name: '简体中文', file: 'zh.json', dir: 'ltr' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json', dir: 'ltr' }
+      // 新增语种：在这里加一项 + 在 i18n/locales/ 下加对应 json 即可
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'wimo_locale',
+      redirectOn: 'root',
+      alwaysRedirect: false,
+      fallbackLocale: 'zh'
+    },
+    bundle: { optimizeTranslationDirective: false }
+  },
+
+  nitro: { compressPublicAssets: true },
+
+  runtimeConfig: {
+    public: {
+      // 若依后端地址，联调时由 .env 覆盖
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+    }
+  }
+})
