@@ -3,6 +3,7 @@
    ============================================================ */
 :root {
   --c-bg: #ffffff;
+  --c-sidebar: #fbfbfc;
   --c-fill: #f4f4f5;
   --c-fill-hover: #ececee;
   --c-line: #ebebee;
@@ -108,28 +109,41 @@ ul { list-style: none; }
 .lang__item.is-active { color: var(--c-text); font-weight: 500; }
 
 /* ============================================================
-   侧边栏
+   侧边栏 —— 浅底分区 + 柔和分组线 + 圆角选中指示
    ============================================================ */
 .sidebar {
   width: var(--sidebar-w); flex: 0 0 var(--sidebar-w);
-  padding: 4px 10px 24px; overflow-y: auto;
+  padding: 10px 12px 28px; overflow-y: auto;
+  background: var(--c-sidebar);
+  border-right: 1px solid var(--c-line);
 }
-.sidebar__group { margin-bottom: 16px; }
+.sidebar__group { margin-bottom: 20px; }
 .sidebar__label {
-  font-size: 12px; color: var(--c-text); font-weight: 600;
-  padding: 0 8px 5px; margin: 10px 0 5px 8px; letter-spacing: .3px;
-  width: fit-content; border-bottom: 2px solid var(--c-black);
+  display: flex; align-items: center; gap: 9px;
+  font-size: 11px; color: var(--c-text-3); font-weight: 600;
+  letter-spacing: 1px; padding: 0 10px; margin: 4px 0 9px;
+}
+.sidebar__label::after {
+  content: ''; flex: 1; height: 1px; background: var(--c-line);
 }
 .sidebar__item {
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; height: 32px; padding: 0 8px;
-  border-radius: var(--radius-s); font-size: 12.5px; color: var(--c-text-2);
-  transition: .15s; text-align: left;
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: 34px; padding: 0 10px;
+  border-radius: var(--radius-s); font-size: 13px; color: var(--c-text-2);
+  transition: background .16s, color .16s; text-align: left;
 }
 .sidebar__item:hover { background: var(--c-fill); color: var(--c-text); }
-.sidebar__item.is-active { background: var(--c-fill); color: var(--c-text); font-weight: 500; box-shadow: inset 2px 0 0 var(--c-black); }
+.sidebar__item:hover svg { color: var(--c-text-2); }
+.sidebar__item.is-active {
+  background: var(--c-fill); color: var(--c-text); font-weight: 600;
+}
+.sidebar__item.is-active::before {
+  content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--c-black);
+}
 .sidebar__item.is-active svg { color: var(--c-text); }
-.sidebar__item svg { flex: 0 0 16px; color: var(--c-text-3); }
+.sidebar__item svg { flex: 0 0 16px; color: var(--c-text-3); transition: color .16s; }
 .sidebar__item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ============================================================
@@ -163,6 +177,9 @@ ul { list-style: none; }
 }
 .field__label .req { color: var(--c-danger); font-size: 12px; }
 .field__label .hint { color: var(--c-text-3); font-weight: 400; margin-left: 2px; }
+.field__label--sub {
+  font-weight: 400; font-size: 12px; color: var(--c-text-2); margin-bottom: 7px;
+}
 
 /* 上传 */
 .uploader { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -209,26 +226,84 @@ ul { list-style: none; }
 /* 设置网格 */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; }
 
-/* 下拉控件：原站带细边框的白底圆角框 */
-.select-wrap {
-  position: relative; display: flex; align-items: center;
-  height: 32px; background: #fff; border: 1px solid var(--c-line); border-radius: 7px;
-  padding: 0 6px 0 10px; transition: .16s;
+/* ---------- 自定义下拉：白底细边框 + 卡片浮层 ---------- */
+.app-select { position: relative; width: 100%; }
+.app-select__trigger {
+  width: 100%; height: 34px;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 0 10px;
+  background: #fff; border: 1px solid var(--c-line); border-radius: var(--radius-s);
+  font-size: 12.5px; color: var(--c-text); text-align: left;
+  transition: border-color .16s, box-shadow .16s, background .16s;
 }
-.select-wrap:hover { border-color: var(--c-text-3); }
-.select-wrap select {
-  flex: 1; min-width: 0; height: 100%; appearance: none;
-  font-size: 12px; color: var(--c-text); cursor: pointer;
-  padding-right: 4px;
-  background: transparent;
+.app-select__trigger:hover { border-color: var(--c-text-3); }
+.app-select.is-open .app-select__trigger {
+  border-color: var(--c-text-3);
+  box-shadow: 0 0 0 3px rgba(24,24,27,.05);
 }
-.select-wrap__caret { color: var(--c-text-3); flex: 0 0 12px; pointer-events: none; }
-.select-wrap__edit {
-  width: 20px; height: 20px; flex: 0 0 20px; border-radius: 5px;
+.app-select__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-select__caret {
+  flex: 0 0 14px; color: var(--c-text-3);
+  transition: transform .18s, color .18s;
+}
+.app-select.is-open .app-select__caret { transform: rotate(180deg); color: var(--c-text-2); }
+
+.app-select__menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50;
+  background: #fff; border: 1px solid var(--c-line);
+  border-radius: var(--radius-m); padding: 5px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.04);
+  max-height: 220px; overflow-y: auto;
+}
+.app-select__menu--up { top: auto; bottom: calc(100% + 6px); }
+.app-select__option {
+  width: 100%; height: 32px; padding: 0 9px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 6px; font-size: 12.5px; color: var(--c-text-2);
+  transition: background .14s, color .14s; text-align: left;
+}
+.app-select__option:hover { background: var(--c-fill); color: var(--c-text); }
+.app-select__option.is-selected { color: var(--c-text); font-weight: 500; }
+.app-select__option.is-selected svg { color: var(--c-text); }
+.app-select__option svg { color: var(--c-text-3); flex: 0 0 13px; }
+
+.dropdown-enter-active, .dropdown-leave-active { transition: opacity .14s ease, transform .14s ease; }
+.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-4px); }
+.app-select__menu--up.dropdown-enter-from,
+.app-select__menu--up.dropdown-leave-to { transform: translateY(4px); }
+
+/* ---------- 数字步进器：与下拉同款白底细边框 ---------- */
+.stepper {
+  display: flex; align-items: center; width: 100%; height: 34px;
+  background: #fff; border: 1px solid var(--c-line); border-radius: var(--radius-s);
+  overflow: hidden; transition: border-color .16s;
+}
+.stepper:hover, .stepper:focus-within { border-color: var(--c-text-3); }
+.stepper__input {
+  flex: 1; min-width: 0; height: 100%; padding: 0 10px;
+  font-size: 12.5px; color: var(--c-text); text-align: left;
+  -moz-appearance: textfield;
+}
+.stepper__input::-webkit-outer-spin-button,
+.stepper__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper__btn {
+  width: 34px; height: 100%; flex: 0 0 34px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--c-text-3); transition: .15s;
+  color: var(--c-text-3); border-left: 1px solid var(--c-line);
+  transition: background .14s, color .14s;
 }
-.select-wrap__edit:hover { background: rgba(0,0,0,.06); color: var(--c-text); }
+.stepper__btn:hover { background: var(--c-fill); color: var(--c-text); }
+.stepper__btn:active { background: var(--c-fill-hover); }
+
+/* ---------- 通用输入（日期时间） ---------- */
+.control {
+  display: flex; align-items: center; width: 100%; height: 34px;
+  background: #fff; border: 1px solid var(--c-line); border-radius: var(--radius-s);
+  padding: 0 10px; transition: border-color .16s;
+}
+.control:hover, .control:focus-within { border-color: var(--c-text-3); }
+.control__input { width: 100%; height: 100%; font-size: 12.5px; color: var(--c-text); }
+.control__input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .55; }
 
 /* 结果配置 */
 .seg-line {
@@ -369,12 +444,12 @@ ul { list-style: none; }
   .topbar__left { gap: 12px; }
 }
 
-
 /* ============================================================
    深色主题（顶栏显示器图标切换）
    ============================================================ */
 :root[data-theme="dark"] {
   --c-bg: #0b0b0d;
+  --c-sidebar: #0e0e11;
   --c-fill: #17171a;
   --c-fill-hover: #202025;
   --c-line: #26262b;
@@ -386,8 +461,17 @@ ul { list-style: none; }
 }
 :root[data-theme="dark"] .lang__menu,
 :root[data-theme="dark"] .drawer,
-:root[data-theme="dark"] .btn-ghost {
+:root[data-theme="dark"] .btn-ghost,
+:root[data-theme="dark"] .app-select__trigger,
+:root[data-theme="dark"] .app-select__menu,
+:root[data-theme="dark"] .stepper,
+:root[data-theme="dark"] .control,
+:root[data-theme="dark"] .textarea,
+:root[data-theme="dark"] .upload-box {
   background: #17171a;
+}
+:root[data-theme="dark"] .app-select.is-open .app-select__trigger {
+  box-shadow: 0 0 0 3px rgba(244,244,245,.06);
 }
 :root[data-theme="dark"] .seg-line__btn.is-active {
   background: #2a2a30; color: var(--c-text);
@@ -410,18 +494,6 @@ ul { list-style: none; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 数字 / 时间输入（schema 驱动表单） */
-.number-input,
-.datetime-input {
-  width: 100%;
-  border: none; outline: none;
-  background: var(--c-fill);
-  border-radius: var(--radius-s);
-  padding: 10px 12px;
-  font-size: 13px; color: var(--c-text);
-  font-family: inherit;
-}
-.datetime-input::-webkit-calendar-picker-indicator { cursor: pointer; }
-
+/* 半宽字段 */
 .field--half-row { display: inline-block; width: calc(50% - 6px); vertical-align: top; margin-right: 12px; }
 .field--half-row + .field--half-row { margin-right: 0; }

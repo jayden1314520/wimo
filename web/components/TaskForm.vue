@@ -53,25 +53,34 @@
         </button>
       </div>
 
-      <div v-else-if="f.type === 'number'" class="select-wrap">
+      <!-- 数字输入：与下拉统一的白底细边框 + 步进按钮 -->
+      <div v-else-if="f.type === 'number'" class="stepper">
+        <button type="button" class="stepper__btn" aria-label="minus" @click="step(f.key, -1)">
+          <AppIcon name="minus" :size="13" />
+        </button>
         <input
           v-model.number="values[f.key]" type="number" min="1" max="20"
-          class="number-input" :placeholder="t('form.ph.count')"
+          class="stepper__input" :aria-label="t(`form.field.${f.key}`)"
+        />
+        <button type="button" class="stepper__btn" aria-label="plus" @click="step(f.key, 1)">
+          <AppIcon name="plus" :size="13" />
+        </button>
+      </div>
+
+      <div v-else-if="f.type === 'datetime'" class="control">
+        <input
+          v-model="values[f.key]" type="datetime-local" class="control__input"
+          :aria-label="t(`form.field.${f.key}`)"
         />
       </div>
 
-      <div v-else-if="f.type === 'datetime'" class="select-wrap">
-        <input v-model="values[f.key]" type="datetime-local" class="datetime-input" />
-      </div>
-
-      <div v-else class="select-wrap">
-        <select v-model="values[f.key]">
-          <option v-for="o in f.options" :key="o" :value="o">
-            {{ t(`options.${f.optionsNs}.${o}`) }}
-          </option>
-        </select>
-        <AppIcon name="pencil" :size="12" class="select-wrap__edit" :title="t('form.edit')" />
-      </div>
+      <!-- 自定义下拉：替代浏览器原生蓝色高亮弹层 -->
+      <AppSelect
+        v-else
+        v-model="values[f.key]"
+        :options="(f.options || []).map(o => ({ value: o, label: t(`options.${f.optionsNs}.${o}`) }))"
+        :label="t(`form.field.${f.key}`)"
+      />
     </div>
 
     <!-- 生成设置 -->
@@ -82,28 +91,17 @@
 
       <div class="grid2">
         <div v-for="f in commonFields" :key="f.key" class="field" style="margin-bottom: 0">
-          <div class="field__label" style="font-weight: 400; font-size: 12px; margin-bottom: 6px">
-            {{ t(`form.fields.${f.key}`) }}
-          </div>
-          <div class="select-wrap">
-            <select v-model="model[f.key]" :aria-label="t(`form.fields.${f.key}`)">
-              <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-            <AppIcon name="pencil" :size="12" class="select-wrap__edit" :title="t('form.edit')" />
-          </div>
+          <div class="field__label field__label--sub">{{ t(`form.fields.${f.key}`) }}</div>
+          <AppSelect
+            v-model="model[f.key]" :options="f.options"
+            :label="t(`form.fields.${f.key}`)"
+          />
         </div>
       </div>
 
-      <div class="field" style="margin: 13px 0 0">
-        <div class="field__label" style="font-weight: 400; font-size: 12px; margin-bottom: 6px">
-          {{ t('form.fields.model') }}
-        </div>
-        <div class="select-wrap">
-          <select v-model="model.model" :aria-label="t('form.fields.model')">
-            <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-          <AppIcon name="pencil" :size="12" class="select-wrap__edit" />
-        </div>
+      <div class="field" style="margin: 14px 0 0">
+        <div class="field__label field__label--sub">{{ t('form.fields.model') }}</div>
+        <AppSelect v-model="model.model" :options="modelOptions" :label="t('form.fields.model')" />
       </div>
     </div>
 
@@ -133,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskSchema, FieldDef } from '~/config/tasks'
+import type { TaskSchema } from '~/config/tasks'
 import { getSchema } from '~/config/tasks'
 
 const props = defineProps<{ generating: boolean; schemaKey: string }>()
@@ -211,6 +209,12 @@ function setFileInput(key: string, el: any) {
 
 function pickFile(key: string) {
   fileInputs[key]?.click()
+}
+
+/* 数字步进，限制 1..20 */
+function step(key: string, delta: number) {
+  const n = Number(values[key]) || 1
+  values[key] = Math.min(20, Math.max(1, n + delta))
 }
 
 function readAsDataURL(file: File): Promise<string> {
