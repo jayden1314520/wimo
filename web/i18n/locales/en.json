@@ -47,7 +47,12 @@
       "language": "Language",
       "resolution": "Resolution",
       "quality": "Quality",
-      "model": "Model"
+      "model": "Model",
+      "videoScene": "Video background",
+      "cameraStyle": "Camera style",
+      "videoResolution": "Resolution",
+      "duration": "Duration",
+      "videoModel": "Model"
     },
     "resultLabel": "Output set",
     "resultDefault": "Default",
@@ -134,6 +139,30 @@
       "loose": "Loose reference",
       "balanced": "Balanced",
       "strict": "Strict replica"
+    },
+    "videoScene": {
+      "studio": "White studio",
+      "desk": "Desktop",
+      "bath": "Bathroom",
+      "kitchen": "Kitchen",
+      "outdoor": "Outdoor",
+      "tech": "Tech stage",
+      "premium": "Premium surface"
+    },
+    "cameraStyle": {
+      "closeup": "Close-up",
+      "slowmo": "Slow motion",
+      "macro": "Macro",
+      "orbit": "Orbit",
+      "static": "Static",
+      "handheld": "Handheld"
+    },
+    "videoModel": {
+      "seedance2fast": "Seedance2.0 Fast",
+      "seedance25flash": "Seedance2.5 Flash",
+      "seedance25": "Seedance2.5",
+      "seedance20": "Seedance2.0",
+      "seedance20mini": "Seedance2.0 Mini"
     }
   },
   "preview": {
@@ -141,7 +170,8 @@
     "records": "History",
     "empty": "Fill in the form and hit “Generate now” — your AI product set will appear here",
     "generating": "Generating image {n}…",
-    "placeholderBadge": "Sample"
+    "placeholderBadge": "Sample",
+    "videoTag": "Sample clip"
   },
   "records": {
     "title": "Generation history",

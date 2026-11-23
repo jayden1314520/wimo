@@ -2,43 +2,34 @@
   <AppSidebar :active="active" />
 
   <div class="main">
-    <template v-if="isVideo">
-      <div class="empty-page">
-        <AppIcon :name="active === 'productVideo' ? 'video' : 'cart'" :size="26" />
-        <p>{{ t('common.comingSoon') }}</p>
-      </div>
-    </template>
-
-    <template v-else>
-      <TaskForm
-        :key="active"
-        :generating="generating"
-        :schema-key="active"
-        @submit="onSubmit"
-      />
-      <PreviewPanel
-        :items="displayItems"
-        :generating="generating"
-        :progress="progress"
-        :has-result="!!result"
-        @records="openRecords"
-      />
-    </template>
+    <TaskForm
+      :key="active"
+      :generating="generating"
+      :schema-key="active"
+      @submit="onSubmit"
+    />
+    <PreviewPanel
+      :key="`preview-${active}`"
+      :preview="preview"
+      :items="displayItems"
+      :generating="generating"
+      :progress="progress"
+      :has-result="!!result"
+      @records="openRecords"
+    />
   </div>
 
   <RecordsDrawer :open="recordsOpen" :records="records" @close="recordsOpen = false" />
 </template>
 
 <script setup lang="ts">
-const { t, locale } = useI18n()
+import { getSchema } from '~/config/tasks'
 
-const VIDEO_KEYS = ['productVideo', 'salesVideo']
+const { t, locale } = useI18n()
 
 /* 功能选择由 URL query 驱动（?task=xxx），侧栏是真实路由链接 */
 const route = useRoute()
 const active = computed(() => (route.query.task as string) || 'productSet')
-
-const isVideo = computed(() => VIDEO_KEYS.includes(active.value))
 
 const recordsOpen = ref(false)
 
@@ -71,6 +62,18 @@ useHead(() => ({
 /* 占位示例图：拼接 baseURL，兼容 GitHub Pages 子路径部署 */
 const base = useRuntimeConfig().app.baseURL || '/'
 const previewUrl = (key: string) => `${base}images/preview/${key}.jpg`
+
+/* 右侧示意图随左侧功能同步切换：9 张静态封面 + 3 段示例视频 */
+const preview = computed(() => {
+  const s = getSchema(active.value)
+  const p = s.preview
+  return {
+    kind: p.kind as 'image' | 'video',
+    src: `${base}images/preview/${p.file}`,
+    poster: p.poster ? `${base}images/preview/${p.poster}` : '',
+    alt: t(`nav.items.${s.key}`)
+  }
+})
 
 const sample = () => [
   'hero', 'shoe1', 'shoe2', 'pair1', 'pair2'

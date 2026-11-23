@@ -2,7 +2,7 @@
  * 任务类型 Schema —— 配置驱动表单
  *
  * 原站（wimogen）所有功能共用同一表单骨架，
- * 每个功能 = 上传区组合 + 特有字段 + 共用生成设置。
+ * 每个功能 = 上传区组合 + 特有字段 + 共用生成设置 + 右侧独立的示意图。
  * 新增功能只需在此追加一条 schema，无需改组件。
  */
 
@@ -23,15 +23,23 @@ export interface FieldDef {
   half?: boolean            // 半宽（与下一字段并排）
 }
 
+/** 右侧预览示意图：图片功能用静态封面，视频功能用示例 mp4 */
+export type PreviewKind = 'image' | 'video'
+
+export interface PreviewDef {
+  kind: PreviewKind
+  file: string              // public/images/preview/ 下的文件名
+  poster?: string           // 视频首帧（加载前的占位图）
+}
+
 export interface TaskSchema {
   key: string
   uploads: UploadSlot[]
   fields: FieldDef[]
-  common: string[]          // 生成设置里的下拉: ratio/platform/region/language/resolution/quality
+  common: string[]          // 生成设置里的下拉: ratio/platform/.../duration/videoScene...
   resultMode: boolean       // 是否显示「系统默认/自定义张数」分段
+  preview: PreviewDef       // 左侧切换时右侧同步切换的示意图
 }
-
-const REGION = ['cn', 'us', 'jp', 'eu']
 
 export const TASK_SCHEMAS: TaskSchema[] = [
   {
@@ -41,7 +49,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'sellingPoints', type: 'textarea', required: true, placeholderKey: 'sellingPoints', ai: true }
     ],
     common: ['ratio', 'platform', 'region', 'language', 'resolution', 'quality'],
-    resultMode: true
+    resultMode: true,
+    preview: { kind: 'image', file: 'cover-productSet.jpg' }
   },
   {
     key: 'productDetail',
@@ -51,7 +60,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'pageStyle', type: 'select', options: ['minimal', 'premium', 'marketing', 'editorial'], optionsNs: 'pageStyle' }
     ],
     common: ['ratio', 'platform', 'region', 'language', 'resolution', 'quality'],
-    resultMode: true
+    resultMode: true,
+    preview: { kind: 'image', file: 'cover-productDetail.jpg' }
   },
   {
     key: 'hotReplica',
@@ -64,7 +74,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'replicaLevel', type: 'select', required: true, options: ['loose', 'balanced', 'strict'], optionsNs: 'replicaLevel' }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: true
+    resultMode: true,
+    preview: { kind: 'image', file: 'cover-hotReplica.jpg' }
   },
   {
     key: 'scene',
@@ -76,7 +87,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'count', type: 'number', required: true }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: true
+    resultMode: true,
+    preview: { kind: 'image', file: 'cover-scene.jpg' }
   },
   {
     key: 'retouch',
@@ -85,7 +97,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'retouchNote', type: 'textarea', required: true, placeholderKey: 'retouchNote' }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    preview: { kind: 'image', file: 'cover-retouch.jpg' }
   },
   {
     key: 'poster',
@@ -97,7 +110,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'activityEnd', type: 'datetime', half: true }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    preview: { kind: 'image', file: 'cover-poster.jpg' }
   },
   {
     key: 'flatLay',
@@ -109,7 +123,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'count', type: 'number', required: true }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    preview: { kind: 'image', file: 'cover-flatLay.jpg' }
   },
   {
     key: 'modelTryon',
@@ -122,7 +137,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'count', type: 'number', required: true }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    preview: { kind: 'image', file: 'cover-modelTryon.jpg' }
   },
   {
     key: 'anythingWear',
@@ -135,7 +151,8 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'count', type: 'number', required: true }
     ],
     common: ['ratio', 'platform', 'region', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    preview: { kind: 'image', file: 'cover-anythingWear.jpg' }
   },
   {
     key: 'swapModel',
@@ -147,7 +164,32 @@ export const TASK_SCHEMAS: TaskSchema[] = [
       { key: 'count', type: 'number', required: true }
     ],
     common: ['ratio', 'platform', 'resolution', 'quality'],
-    resultMode: false
+    resultMode: false,
+    // 原站该功能的示意内容为动态视频
+    preview: { kind: 'video', file: 'clip-swapModel.mp4', poster: 'poster-swapModel.jpg' }
+  },
+  {
+    /* 视频 · 商品展示短片：原站字段为 商品图 + 视频背景/镜头/清晰度/时长/视频模型 */
+    key: 'productVideo',
+    uploads: [{ key: 'product', labelKey: 'product', max: 1 }],
+    fields: [],
+    common: ['ratio', 'videoScene', 'cameraStyle', 'videoResolution', 'duration', 'videoModel'],
+    resultMode: false,
+    preview: { kind: 'video', file: 'clip-productVideo.mp4', poster: 'poster-productVideo.jpg' }
+  },
+  {
+    /* 视频 · 带货视频：比展示短片多 卖点、模特图来源、平台/地区/语言 */
+    key: 'salesVideo',
+    uploads: [
+      { key: 'product', labelKey: 'product', max: 1 },
+      { key: 'modelRef', labelKey: 'modelRef', max: 1 }
+    ],
+    fields: [
+      { key: 'sellingPoints', type: 'textarea', required: true, placeholderKey: 'sellingPoints', ai: true }
+    ],
+    common: ['ratio', 'platform', 'region', 'language', 'videoResolution', 'duration', 'videoModel'],
+    resultMode: false,
+    preview: { kind: 'video', file: 'clip-salesVideo.mp4', poster: 'poster-salesVideo.jpg' }
   }
 ]
 

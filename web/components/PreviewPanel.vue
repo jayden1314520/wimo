@@ -22,29 +22,53 @@
         <div class="gen-badge">{{ t('preview.generating', { n: progress }) }}</div>
       </div>
 
-      <!-- 默认 / 完成：原站风格的成品封面图 -->
+      <!-- 默认 / 完成：随左侧功能切换的示意图 -->
       <div v-else class="preview-hero">
+        <!-- 视频类功能：示例短片播放器 -->
+        <div v-if="preview.kind === 'video'" class="preview-video">
+          <video
+            class="preview-video__media"
+            :src="preview.src"
+            :poster="preview.poster || undefined"
+            autoplay muted loop playsinline preload="metadata"
+          ></video>
+          <span class="preview-video__tag">
+            <AppIcon name="play" :size="11" />
+            {{ t('preview.videoTag') }}
+          </span>
+        </div>
+
+        <!-- 图片类功能：该功能的模板封面示意图 -->
         <img
+          v-else
           class="preview-hero__img"
-          :src="coverSrc"
-          alt="Maison Talon 套图效果"
+          :src="preview.src"
+          :alt="`${preview.alt} · ${t('preview.placeholderBadge')}`"
         />
-        <div v-if="hasResult" class="gen-badge gen-badge--done">✓ {{ t('records.count', { n: items.length }) }}</div>
+
+        <div v-if="hasResult" class="gen-badge gen-badge--done">
+          ✓ {{ t('records.count', { n: items.length }) }}
+        </div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+interface PreviewCfg {
+  kind: 'image' | 'video'
+  src: string
+  poster: string
+  alt: string
+}
+
+defineProps<{
   items: string[]
   generating: boolean
   progress: number
   hasResult: boolean
+  preview: PreviewCfg
 }>()
 const emit = defineEmits<{ records: [] }>()
 const { t } = useI18n()
-
-const base = useRuntimeConfig().app.baseURL || '/'
-const coverSrc = `${base}images/preview/template-cover.jpg`
 </script>

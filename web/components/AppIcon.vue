@@ -38,7 +38,8 @@ const ICONS: Record<string, string[]> = {
   bolt: ['M13 2L4 14h6l-1 8 9-12h-6l1-8z'],
   check: ['M4 12l5 5L20 6'],
   'chevron-down': ['M6 9l6 6 6-6'],
-  minus: ['M5 12h14']
+  minus: ['M5 12h14'],
+  play: ['M8 5l11 7-11 7z']
 }
 
 const paths = computed(() => ICONS[props.name] || ICONS.grid)

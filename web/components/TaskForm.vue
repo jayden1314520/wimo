@@ -92,14 +92,24 @@
       <div class="grid2">
         <div v-for="f in commonFields" :key="f.key" class="field" style="margin-bottom: 0">
           <div class="field__label field__label--sub">{{ t(`form.fields.${f.key}`) }}</div>
+          <!-- 视频时长：数字 + 秒单位 -->
+          <div v-if="f.key === 'duration'" class="control control--unit">
+            <input
+              v-model.number="model.duration" type="number" min="1" max="60"
+              class="control__input" :aria-label="t('form.fields.duration')"
+            />
+            <span class="control__unit">s</span>
+          </div>
           <AppSelect
+            v-else
             v-model="model[f.key]" :options="f.options"
             :label="t(`form.fields.${f.key}`)"
           />
         </div>
       </div>
 
-      <div class="field" style="margin: 14px 0 0">
+      <!-- 视频模型已包含在上方网格中；图片类功能单独一行 -->
+      <div v-if="!schema.common.includes('videoModel')" class="field" style="margin: 14px 0 0">
         <div class="field__label field__label--sub">{{ t('form.fields.model') }}</div>
         <AppSelect v-model="model.model" :options="modelOptions" :label="t('form.fields.model')" />
       </div>
@@ -167,18 +177,30 @@ watchEffect(() => {
   }
 })
 
-/* 共用生成设置（按 schema.common 过滤） */
+/* 共用生成设置（按 schema.common 过滤）
+   —— 图片类与视频类共用大部分字段，视频类另有专属选项（对齐原站） */
 const ALL_COMMON: Record<string, () => { value: string; label: string }[]> = {
   ratio: () => ['3:4', '1:1', '9:16', '16:9', '4:3'].map(v => ({ value: v, label: v })),
   platform: () => ['taobao', 'jd', 'pdd', 'douyin'].map(v => ({ value: v, label: t(`options.platform.${v}`) })),
   region: () => ['cn', 'us', 'jp', 'eu'].map(v => ({ value: v, label: t(`options.region.${v}`) })),
   language: () => ['zh', 'en', 'ja'].map(v => ({ value: v, label: t(`options.language.${v}`) })),
   resolution: () => ['2k', '4k'].map(v => ({ value: v, label: t(`options.resolution.${v}`) })),
-  quality: () => ['low', 'mid', 'high'].map(v => ({ value: v, label: t(`options.quality.${v}`) }))
+  quality: () => ['low', 'mid', 'high'].map(v => ({ value: v, label: t(`options.quality.${v}`) })),
+  videoResolution: () => ['480p', '720p'].map(v => ({ value: v, label: v })),
+  videoScene: () => ['studio', 'desk', 'bath', 'kitchen', 'outdoor', 'tech', 'premium']
+    .map(v => ({ value: v, label: t(`options.videoScene.${v}`) })),
+  cameraStyle: () => ['closeup', 'slowmo', 'macro', 'orbit', 'static', 'handheld']
+    .map(v => ({ value: v, label: t(`options.cameraStyle.${v}`) })),
+  videoModel: () => ['seedance2fast', 'seedance25flash', 'seedance25', 'seedance20', 'seedance20mini']
+    .map(v => ({ value: v, label: t(`options.videoModel.${v}`) }))
 }
 
+/* duration 为数字输入（秒），不是下拉 */
 const commonFields = computed(() =>
-  schema.value.common.map(key => ({ key, options: ALL_COMMON[key]() }))
+  schema.value.common.map(key => ({
+    key,
+    options: ALL_COMMON[key] ? ALL_COMMON[key]() : []
+  }))
 )
 
 const model = reactive({
@@ -188,7 +210,12 @@ const model = reactive({
   language: 'zh',
   resolution: '2k',
   quality: 'mid',
-  model: 'wimo2'
+  model: 'wimo2',
+  videoResolution: '480p',
+  videoScene: 'studio',
+  cameraStyle: 'closeup',
+  videoModel: 'seedance2fast',
+  duration: 5
 })
 
 const modelOptions = computed(() =>
