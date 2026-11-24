@@ -14,6 +14,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.wimo.domain.dto.WimoTaskSubmit;
 import com.ruoyi.wimo.service.WimoAuthContext;
 import com.ruoyi.wimo.service.WimoBillingEngine;
+import com.ruoyi.wimo.service.WimoCapabilityService;
 import com.ruoyi.wimo.service.WimoDiamondService;
 import com.ruoyi.wimo.service.WimoModelService;
 import com.ruoyi.wimo.service.WimoWorkflowService;
@@ -34,6 +35,7 @@ public class WimoMarketController extends WimoApiSupport
     @Autowired private WimoWorkflowService workflowService;
     @Autowired private WimoBillingEngine billingEngine;
     @Autowired private WimoDiamondService diamondService;
+    @Autowired private WimoCapabilityService capabilityService;
 
     /** 可选模型：按能力或智能体 key 过滤（传 workflow 时自动套用该智能体的模型白名单） */
     @GetMapping("/model/list")
@@ -50,7 +52,36 @@ public class WimoMarketController extends WimoApiSupport
         return wrap(() -> workflowService.publicWorkflows());
     }
 
-    /** 提交前预估价：按当前表单参数实时算出本次消耗钻石 */
+    /**
+     * 计费规则树（用户端）：5 个能力分支，每个含维度档位、模型与基础价。
+     * 可传 workflow=xxx 只返回该工作流所属能力的分支，减少传输。
+     */
+    @GetMapping("/capability/tree")
+    public R<Object> capabilityTree(@RequestParam(required = false) String workflow,
+                                    @RequestParam(required = false) String capability)
+    {
+        return wrap(() -> {
+            java.util.List<java.util.Map<String, Object>> all = capabilityService.publicTree();
+            if (capability != null && !capability.isEmpty())
+            {
+                return all.stream().filter(m -> capability.equals(m.get("capabilityKey")))
+                        .findFirst().map(m -> (Object) m).orElse(all);
+            }
+            if (workflow != null && !workflow.isEmpty())
+            {
+                com.ruoyi.wimo.domain.WimoWorkflow wf = workflowService.getByKey(workflow);
+                if (wf != null)
+                {
+                    String ck = wf.getCapability();
+                    return all.stream().filter(m -> ck.equals(m.get("capabilityKey")))
+                            .findFirst().map(m -> (Object) m).orElse(all);
+                }
+            }
+            return all;
+        });
+    }
+
+    /** 提交前预估价：按当前表单参数实时算出本次消耗钻石（含逐层 breakdown 明细） */
     @PostMapping("/billing/quote")
     public R<Map<String, Object>> quote(@RequestBody WimoTaskSubmit submit)
     {
@@ -79,6 +110,7 @@ public class WimoMarketController extends WimoApiSupport
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("workflows", workflowService.publicWorkflows());
             m.put("models", modelService.publicModels(null, null, workflowService));
+            m.put("capabilityTree", capabilityService.publicTree());
             m.put("balance", diamondService.balanceOf(WimoAuthContext.getUserId()));
             return m;
         });

@@ -811,7 +811,13 @@ ul { list-style: none; }
   background: var(--c-fill);
   border: 1px solid var(--c-line);
   font-size: 13px;
+  cursor: pointer;
+  transition: border-color .18s, background .18s;
+  outline: none;
 }
+.cost-bar:hover { border-color: var(--c-accent, #f59e0b); }
+.cost-bar:focus-visible { box-shadow: 0 0 0 2px rgba(245,158,11,.35); }
+.cost-bar--open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
 .cost-bar--short { background: #fef2f2; border-color: #fecaca; }
 :root[data-theme="dark"] .cost-bar--short { background: #3a1e1e; border-color: #6b2c2c; }
 .cost-bar__left { display: inline-flex; align-items: center; gap: 7px; color: var(--c-text-2); }
@@ -825,4 +831,40 @@ ul { list-style: none; }
   max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .cost-bar__hint { font-size: 12px; color: var(--c-text-3); }
+.cost-bar__more { font-size: 11px; color: var(--c-text-3); display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; }
+.cost-bar__chev { display: inline-block; transition: transform .18s; font-size: 10px; }
+.cost-bar__chev.is-up { transform: rotate(180deg); }
 .cost-warn { color: var(--c-danger); font-size: 12px; margin: -2px 0 12px; }
+
+/* 逐层费用拆解 */
+.cost-detail {
+  border: 1px solid var(--c-line); border-top: none;
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  background: var(--c-fill); padding: 6px 14px 10px;
+  margin: 0 0 12px;
+}
+.cost-detail__head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--c-text-3); padding: 6px 0 8px;
+  border-bottom: 1px dashed var(--c-line); margin-bottom: 4px;
+}
+.cost-detail__cap { color: var(--c-accent, #d97706); font-weight: 600; }
+.cost-detail__row {
+  display: grid; grid-template-columns: 1fr auto 54px;
+  align-items: center; gap: 10px; padding: 5px 0;
+  font-size: 12px; color: var(--c-text-2);
+  border-bottom: 1px solid var(--c-line);
+}
+.cost-detail__row:last-of-type { border-bottom: none; }
+.cost-detail__row--clamp, .cost-detail__row--capability { color: var(--c-text); }
+.cost-detail__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cost-detail__opt { color: var(--c-text-3); margin-left: 6px; font-size: 11px; }
+.cost-detail__val { font-variant-numeric: tabular-nums; color: var(--c-text-2); white-space: nowrap; }
+.cost-detail__sub { text-align: right; font-weight: 700; color: var(--c-text); font-variant-numeric: tabular-nums; }
+.cost-detail__foot {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--c-text-2); padding-top: 8px; margin-top: 4px;
+  border-top: 1px solid var(--c-line);
+}
+.cost-detail__foot b { color: #d4380d; font-size: 15px; font-variant-numeric: tabular-nums; }
+:root[data-theme="dark"] .cost-detail__foot b { color: #fbbf24; }

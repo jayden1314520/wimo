@@ -269,7 +269,7 @@
 | `/wimo/model` | PUT | `wimo:model:edit` | 更新 |
 | `/wimo/model/{id}` | DELETE | `wimo:model:remove` | 删除 |
 
-关键字段：`capability`（`text2img`/`img2img`/`img2video`/`text2video`）、`costMultiplier`（钻石倍率）、`enabled`、`configJson`。
+关键字段：`capability`（`text2text` 预留 / `text2img` / `img2img` / `img2video` / `text2video`，共 5 类）、`costMultiplier`（钻石倍率，作为能力树上「模型倍率」叶节点投影）、`enabled`、`configJson`。`text2text` 目前只做能力节点与模型池预留，不挂用户端菜单。
 
 ### 3.6 智能体工作流 `/wimo/workflow`
 
@@ -300,8 +300,9 @@
 | --- | --- | --- |
 | `/api/wimo/model/list?workflow=&capability=` | GET | 可选模型；传 `workflow` 自动套用该智能体能力 + 白名单 |
 | `/api/wimo/workflow/list` | GET | 13 个智能体摘要（起步价/计费单位/上下限/默认模型） |
-| `/api/wimo/market/config` | GET | 一次性返回工作流 + 模型 + 余额，减少首屏请求 |
-| `/api/wimo/billing/quote` | POST | **提交前预估价**，body 同 `WimoTaskSubmit` |
+| **`/api/wimo/capability/tree?workflow=&capability=`** | GET | **★计费规则树**（5 个能力分支，含维度档位/模型倍率/基础价）；传 `workflow` 只返回其所属能力对象 |
+| `/api/wimo/market/config` | GET | 一次性返回工作流 + 模型 + **能力树** + 余额，减少首屏请求 |
+| `/api/wimo/billing/quote` | POST | **提交前预估价**（含逐层 breakdown），body 同 `WimoTaskSubmit` |
 | `/api/wimo/diamond/balance` | GET | 当前会员钱包 `{balance, frozen, total, used, anonymous}` |
 | `/api/wimo/diamond/logs?limit=20` | GET | 当前会员流水 |
 
@@ -320,21 +321,91 @@ curl -X POST http://localhost:8080/api/wimo/billing/quote \
     "cost": 252, "modelKey": "seedance25", "balance": 100, "enough": false,
     "anonymous": false, "workflowKey": "storeVisit",
     "snapshot": {
-      "workflowName": "探店视频", "capability": "img2video",
+      "workflowName": "探店视频", "capability": "img2video", "capabilityName": "图生视频",
+      "costSource": "override", "priceSource": "capability-tree", "treeEnabled": true,
       "baseCost": 22, "unit": "second", "units": 30, "unitCost": 1.6,
       "subtotal": 70, "modelFactor": 2.0,
-      "factors": [{ "field": "videoResolution", "value": "1080p", "factor": 1.8 }],
-      "beforeCeil": 252, "minCost": 10, "maxCost": 2000, "total": 252,
-      "formula": "clamp(ceil((base + unitCost*units) * Πfactors * modelFactor), min, max)"
-    }
+      "factors": [
+        { "field": "duration", "value": "30", "factor": 1.0, "matched": true },
+        { "field": "videoResolution", "value": "1080p", "factor": 1.8, "matched": true }
+      ],
+      "factorProduct": 1.8, "beforeCeil": 252, "minCost": 10, "maxCost": 2000, "total": 252,
+      "breakdown": ["…见下…"],
+      "formula": "clamp(ceil((capability.base + unitCost*units) * Π node.factor * model.factor), min, max)"
+    },
+    "breakdown": [
+      { "layer": "capability", "labelZh": "能力基础价", "value": "img2video", "costSource": "override", "amount": 22, "subtotal": 22 },
+      { "layer": "unit", "labelZh": "单位计价", "unit": "second", "units": 30, "unitCost": 1.6, "subtotal": 70 },
+      { "layer": "unit-adjust", "dimension": "duration", "option": "30", "labelZh": "时长", "factor": 1.0, "subtotal": 70 },
+      { "layer": "dimension", "dimension": "videoResolution", "option": "1080p", "optionLabelZh": "1080P", "labelZh": "视频清晰度", "factor": 1.8, "matched": true, "subtotal": 126 },
+      { "layer": "model", "labelZh": "模型倍率", "modelKey": "seedance25", "factor": 2.0, "subtotal": 252 },
+      { "layer": "clamp", "labelZh": "取整 / 限价", "beforeCeil": 252, "minCost": 10, "maxCost": 2000, "total": 252 }
+    ]
   }
 }
 ```
 
-**计费公式**：`clamp(ceil((baseCost + unitCost × units) × Π维度倍率 × 模型倍率), minCost, maxCost)`
-图片按结果张数 + `resolution`/`quality` 倍率，视频按秒 + `videoResolution` 倍率，再乘模型 `costMultiplier`。
+> `breakdown` 是**逐层求值明细**，每层带 `labelZh/labelEn`、命中的档位 `option`、倍率/取值与累计 `subtotal`，用户端「费用拆解」与管理端「即时试算」直接渲染它。`layer` 取值：`capability` / `unit` / `unit-adjust`（单位维度的档位）/ `dimension` / `model` / `clamp`。
+
+**计费公式（沿能力树逐层求值）**：
+`clamp(ceil((能力基础价 + unitCost × units) × Π 档位倍率 × 模型倍率), minCost, maxCost)`
+档位倍率来自 `wimo_price_node`（按能力+维度取选中档位），模型倍率来自 `wimo_model.costMultiplier`；工作流 `costSource=inherit` 时基础价改用能力层。若该能力无启用档位，自动回退 `wimo_workflow.multipliers` 旧 JSON（`priceSource = workflow-multipliers`）。
 
 **创建任务 `POST /api/wimo/task` 返回体新增字段**：`costDiamonds`（本单消耗）、`balance`（预扣后余额）、`modelKey`。任务详情新增 `costDiamonds / diamondState / modelKey / billingSnapshot`。`diamondState`：`0` 冻结待结算、`1` 已扣减、`2` 已退还、`9` 不计费（匿名演示）。余额不足时返回 `R.fail("钻石余额不足…")` 且不落库任务。
+
+---
+
+## 3.9 管理端 · 计费规则树（能力 / 档位节点）`★v3`
+
+均需 `wimo:capability:list` / `wimo:capability:edit` 权限（若依后台令牌）。
+
+| 接口 | 方法 | 说明 |
+| --- | --- | --- |
+| `/wimo/capability/tree` | GET | **整棵四级计费树** `{rows, capabilities, priceNodes}`，见下方结构 |
+| `/wimo/capability/list` | GET | 能力分支列表 |
+| `/wimo/capability/{id}` | GET | 单个能力详情 |
+| `/wimo/capability` | PUT | 编辑能力基础价/单位/单价/上下限（即时生效） |
+| `/wimo/capability/reload` | POST | 从 JSON 幂等重载能力与档位（不覆盖已有改动） |
+| `/wimo/capability/node/list?capabilityKey=` | GET | 某能力下原始档位节点（编辑用） |
+| `/wimo/capability/node` | POST | 新增档位节点 |
+| `/wimo/capability/node` | PUT | 编辑档位（倍率/标签/启停，即时生效） |
+| `/wimo/capability/node/toggle` | PUT | 启停档位 `{nodeId, enabled}` |
+| `/wimo/capability/node/{id}` | DELETE | 删除档位（删分组连带删其下档位） |
+| **`/wimo/capability/simulate`** | POST | **即时试算**：body 同 `WimoTaskSubmit`，返回 `{cost, modelKey, breakdown, snapshot}`，复用真实计费引擎验证改价 |
+
+**`GET /api/wimo/capability/tree?workflow=storeVisit`（用户端）返回单个能力对象：**
+
+```json
+{
+  "code": 200,
+  "data": {
+    "capabilityKey": "img2video", "nameZh": "图生视频", "nameEn": "Image-to-Video",
+    "baseCost": 22, "unit": "second", "unitCost": 1.6, "unitField": "duration",
+    "minCost": 8, "maxCost": 2000, "defaultModel": "seedance2fast",
+    "dimensions": [
+      { "dimension": "videoResolution", "labelZh": "视频清晰度", "labelEn": "Video Resolution", "enabled": "1",
+        "options": [
+          { "nodeKey": "img2video:videoResolution:720p", "optionValue": "720p", "labelZh": "720P", "factor": 1.4, "enabled": "1" },
+          { "nodeKey": "img2video:videoResolution:1080p", "optionValue": "1080p", "labelZh": "1080P", "factor": 1.8, "enabled": "1" }
+        ] },
+      { "dimension": "duration", "labelZh": "时长", "options": [ { "optionValue": "30", "labelZh": "30 秒", "factor": 1.0 } ] }
+    ],
+    "models": [ { "modelKey": "seedance25", "nameZh": "Seedance 2.5 Pro", "costMultiplier": 2.0, "enabled": "1" } ]
+  }
+}
+```
+
+> 不传 `workflow`/`capability` 时返回**数组**（5 个能力分支）。`/wimo/capability/tree`（管理端）在此基础上每个能力还带 `workflows` 分支与内部 `nodeId`。
+
+**`PUT /wimo/capability/node` 改价示例（把 img2video 的 4K 倍率从 3.2 调到 3.5，该能力全部视频工作流立即生效）：**
+
+```bash
+curl -X PUT http://localhost:8080/wimo/capability/node \
+  -H 'Content-Type: application/json' -H 'Authorization: Bearer <admin-token>' \
+  -d '{"nodeId":<id>,"factor":3.5,"labelZh":"4K","enabled":"1"}'
+```
+
+> 档位 `nodeKey` 规则：`{capabilityKey}:{dimension}:{optionValue}`，维度分组节点为 `{capabilityKey}:{dimension}:group`。节点 `factor` 必须 > 0；数值型维度（如字数）用 `minValue/maxValue` 区间匹配提交值。
 
 ---
 
@@ -368,20 +439,40 @@ curl -X POST http://localhost:8080/api/wimo/billing/quote \
 
 ## 5. 数据库
 
-`server/sql/wimo.sql`（全新库）建 8 张业务表、16 个菜单、5 类字典；已有库用幂等增量脚本 `server/upgrade/wimo_upgrade.sql`。
+`server/sql/wimo.sql`（全新库，v3）建 10 张业务表、18 个菜单、6 类字典；已有库用幂等增量脚本 `server/upgrade/wimo_upgrade.sql`（v1→v2）、`server/upgrade/wimo_upgrade_v3.sql`（v2→v3，能力树）。
 
 | 表 | 用途 |
 | --- | --- |
 | `wimo_user` | 会员（邮箱唯一、BCrypt 密码、**钻石余额/冻结/累计**） |
 | `wimo_mail_log` | 验证码发送日志 |
 | `wimo_schema` | 13 个功能模板配置 |
-| `wimo_model` | **AI 模型注册表**（四类能力、倍率、endpoint） |
-| `wimo_workflow` | **13 个智能体工作流**（能力/模型池/计费规则/执行步骤） |
-| `wimo_task` | 生成任务（状态机、进度、payload、结果、耗时、**计费快照**） |
+| `wimo_capability` | **★能力层（计费规则树根）**：5 类能力，各自基础价/单位/单价/价格区间/默认模型 |
+| `wimo_price_node` | **★价格节点**：能力下的维度档位，`parent_id` 自关联成树，逐档 `factor` 倍率/启停 |
+| `wimo_model` | **AI 模型注册表**（五类能力含文本生成预留、倍率、endpoint） |
+| `wimo_workflow` | **13 个智能体工作流**（能力/模型池/`costSource` 覆盖或继承/计费/执行步骤） |
+| `wimo_task` | 生成任务（状态机、进度、payload、结果、耗时、**计费快照含 breakdown**） |
 | `wimo_task_result` | 结果文件明细 |
 | `wimo_diamond_log` | **钻石流水**（每次余额/冻结变动留痕） |
 
-菜单 `2000–2015`：映物业务目录、任务管理、数据看板、模板配置、邮件日志、**模型管理、智能体工作流、钻石管理**及各自按钮权限。
-字典：`wimo_task_status`、`wimo_task_group`、`wimo_model_capability`、`wimo_diamond_change`、`wimo_billing_unit`。
+菜单 `2000–2017`：映物业务目录、任务管理、数据看板、模板配置、邮件日志、模型管理、智能体工作流、钻石管理、**★计费规则树(2016)**及各自按钮权限。
+字典：`wimo_task_status`、`wimo_task_group`、`wimo_model_capability`（含 `text2text`）、`wimo_diamond_change`、`wimo_billing_unit`（含 `kiloword`）、**`wimo_price_dimension`**（计费维度）。
+
+> 计费引擎沿 `wimo_capability → wimo_price_node / wimo_model → wimo_workflow` 逐层求值；能力表/价格节点表不存在时（老库未升级）自动回退 `wimo_workflow.multipliers`，功能不受影响。
+
+---
+
+## 6. 计费规则树速查
+
+```
+cost = clamp( ceil( (能力基础价 + unitCost × units) × Π 档位倍率 × 模型倍率 ), minCost, maxCost )
+```
+| 层 | 数据来源 | 关键字段 |
+| --- | --- | --- |
+| 能力基础 | `wimo_capability` | `base_cost / unit / unit_cost / unit_field / min_cost / max_cost` |
+| 工作流覆盖 | `wimo_workflow` | `cost_source=override` 用自身 `base_cost`；`=inherit` 用能力层 |
+| 维度档位 | `wimo_price_node`（option） | `factor`（按 `option_value` 精确匹配，或 `min_value/max_value` 区间） |
+| 模型 | `wimo_model` | `cost_multiplier` |
+
+5 个能力分支默认基础价：`text2text` 6（千字，仅预留）/ `text2img` 12 / `img2img` 10 / `img2video` 22（每秒 1.6）/ `text2video` 26（每秒 1.8）。求值示例见 `docs/LOCAL_RUN.md` 第 7 章。
 
 > 本地运行与配置详情见 [`docs/LOCAL_RUN.md`](./LOCAL_RUN.md)。

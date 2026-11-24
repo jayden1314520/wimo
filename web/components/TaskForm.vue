@@ -133,11 +133,18 @@
       </div>
     </div>
 
-    <!-- 本次消耗钻石：随清晰度 / 时长 / 模型实时预估 -->
-    <div class="cost-bar" :class="{ 'cost-bar--short': quote && !quote.enough }">
+    <!-- 本次消耗钻石：随清晰度 / 时长 / 模型实时预估，点击展开逐层费用拆解 -->
+    <div
+      class="cost-bar" :class="{ 'cost-bar--short': quote && !quote.enough, 'cost-bar--open': showBreakdown }"
+      role="button" tabindex="0" @click="toggleBreakdown" @keydown.enter="toggleBreakdown"
+    >
       <div class="cost-bar__left">
         <AppIcon name="spark" :size="15" />
         <span>{{ t('form.costLabel') }}</span>
+        <span v-if="quote && quote.breakdown && quote.breakdown.length" class="cost-bar__more">
+          {{ showBreakdown ? t('form.costBreakdownHide') : t('form.costBreakdown') }}
+          <span class="cost-bar__chev" :class="{ 'is-up': showBreakdown }">▾</span>
+        </span>
       </div>
       <div class="cost-bar__right">
         <template v-if="quote">
@@ -149,6 +156,35 @@
         <span v-else class="cost-bar__hint">{{ t('form.costCalculating') }}</span>
       </div>
     </div>
+
+    <!-- 逐层求值明细：能力基础 → 单位计价 → 各维度档位 → 模型 → 限价 -->
+    <div v-if="showBreakdown && quote && quote.breakdown && quote.breakdown.length" class="cost-detail">
+      <div class="cost-detail__head">
+        <span>{{ t('form.breakdownTitle') }}</span>
+        <span class="cost-detail__cap">{{ capabilityName }}</span>
+      </div>
+      <div v-for="(b, i) in quote.breakdown" :key="i" class="cost-detail__row" :class="`cost-detail__row--${b.layer}`">
+        <span class="cost-detail__label">
+          {{ locale === 'en' ? (b.labelEn || b.labelZh) : (b.labelZh || b.labelEn) }}
+          <span v-if="b.option" class="cost-detail__opt">
+            {{ locale === 'en' ? (b.optionLabelEn || b.option) : (b.optionLabelZh || b.option) }}
+          </span>
+          <span v-else-if="b.modelKey" class="cost-detail__opt">{{ b.modelKey }}</span>
+        </span>
+        <span class="cost-detail__val">
+          <template v-if="b.layer === 'unit'">{{ b.units }} × {{ b.unitCost }}</template>
+          <template v-else-if="b.total !== undefined">= {{ b.total }}</template>
+          <template v-else-if="b.factor !== undefined">×{{ Number(b.factor).toFixed(2) }}</template>
+          <template v-else-if="b.amount !== undefined">+{{ b.amount }}</template>
+        </span>
+        <span class="cost-detail__sub">{{ b.total ?? (b.subtotal !== undefined ? Number(b.subtotal).toFixed(0) : '') }}</span>
+      </div>
+      <div class="cost-detail__foot">
+        <span>{{ t('form.breakdownFoot') }}</span>
+        <b>{{ quote.cost }} {{ t('form.costUnit') }}</b>
+      </div>
+    </div>
+
     <p v-if="quote && !quote.enough" class="cost-warn">
       {{ t('form.costNotEnough', { need: quote.cost, balance: quote.balance }) }}
     </p>
@@ -189,10 +225,19 @@ const api = useWimoApi()
 
 const schema = computed<TaskSchema>(() => getSchema(props.schemaKey))
 
-/* ---------------- 动态模型 / 智能体（管理端配置，web 端不写死） ---------------- */
+/* ---------------- 动态模型 / 智能体 / 能力树（管理端配置，web 端不写死） ---------------- */
 interface RemoteModel { modelKey: string; nameZh: string; nameEn: string; capability: string; costMultiplier: number }
 const remoteModels = ref<RemoteModel[]>([])
 const currentWorkflow = ref<any>(null)
+const capability = ref<any>(null)
+
+/** 能力分支名（费用拆解标题右侧展示） */
+const capabilityName = computed(() => {
+  if (!capability.value) return ''
+  return locale.value === 'en'
+    ? (capability.value.nameEn || capability.value.capabilityKey)
+    : (capability.value.nameZh || capability.value.capabilityKey)
+})
 
 /** 按当前智能体的能力拉取可用模型；后端不可达时回退内置选项，保证静态站可演示 */
 async function loadModels() {
@@ -218,8 +263,50 @@ async function loadWorkflow() {
   } catch { currentWorkflow.value = null }
 }
 
-watch(() => props.schemaKey, () => { loadModels(); loadWorkflow() })
-onMounted(() => { loadModels(); loadWorkflow() })
+/** 拉取该工作流所属能力的计费规则树：维度档位与模型倍率由管理端配置驱动 */
+async function loadCapability() {
+  try {
+    const res = await api.capabilityTree(props.schemaKey)
+    // 传 workflow 时后端返回单个能力对象；异常/静态站返回数组时取首个
+    const cap = Array.isArray(res) ? (res[0] || null) : (res || null)
+    capability.value = cap
+    // 若能力树含模型且旧模型接口没数据，用树里的模型补齐下拉
+    if (cap && Array.isArray(cap.models) && cap.models.length && !remoteModels.value.length) {
+      remoteModels.value = cap.models.map((m: any) => ({
+        modelKey: m.modelKey, nameZh: m.nameZh, nameEn: m.nameEn,
+        capability: cap.capabilityKey, costMultiplier: Number(m.costMultiplier ?? 1)
+      }))
+    }
+    // 维度档位有变化时，把当前选中值纠正到首个启用档位
+    alignDimensionSelection()
+  } catch { capability.value = null }
+}
+
+/** 从能力树取某维度的启用档位（optionValue + 倍率展示） */
+function dimOptions(dimension: string): { value: string; label: string }[] {
+  const cap = capability.value
+  if (!cap || !Array.isArray(cap.dimensions)) return []
+  const g = cap.dimensions.find((d: any) => d.dimension === dimension)
+  if (!g || !Array.isArray(g.options)) return []
+  return g.options
+    .filter((o: any) => o.enabled !== '0')
+    .map((o: any) => {
+      const name = locale.value === 'en' ? (o.labelEn || o.optionValue) : (o.labelZh || o.optionValue)
+      return { value: o.optionValue, label: `${name} · ×${Number(o.factor ?? 1).toFixed(1)}` }
+    })
+}
+
+/** 档位值变化时纠正到合法项（避免提交到停用档位） */
+function alignDimensionSelection() {
+  for (const dim of ['resolution', 'videoResolution', 'quality'] as const) {
+    const opts = dimOptions(dim)
+    if (!opts.length) continue
+    if (!opts.some(o => o.value === (model as any)[dim])) (model as any)[dim] = opts[0].value
+  }
+}
+
+watch(() => props.schemaKey, () => { loadModels(); loadWorkflow(); loadCapability() })
+onMounted(() => { loadModels(); loadWorkflow(); loadCapability() })
 
 interface Asset {
   preview: string
@@ -254,10 +341,19 @@ const ALL_COMMON: Record<string, () => { value: string; label: string }[]> = {
   platform: () => ['taobao', 'jd', 'pdd', 'douyin'].map(v => ({ value: v, label: t(`options.platform.${v}`) })),
   region: () => ['cn', 'us', 'jp', 'eu'].map(v => ({ value: v, label: t(`options.region.${v}`) })),
   language: () => ['zh', 'en', 'ja'].map(v => ({ value: v, label: t(`options.language.${v}`) })),
-  resolution: () => ['2k', '4k'].map(v => ({ value: v, label: t(`options.resolution.${v}`) })),
-  quality: () => ['low', 'mid', 'high'].map(v => ({ value: v, label: t(`options.quality.${v}`) })),
-  // 清晰度档位与后端 multipliers 对齐；视频的 1080p/2k/4k 会显著提高消耗
-  videoResolution: () => ['480p', '720p', '1080p', '2k', '4k'].map(v => ({ value: v, label: v })),
+  // 清晰度 / 画质档位优先由管理端「计费规则树」下发（含倍率），无后端时回退内置
+  resolution: () => {
+    const d = dimOptions('resolution')
+    return d.length ? d : ['2k', '4k'].map(v => ({ value: v, label: t(`options.resolution.${v}`) }))
+  },
+  quality: () => {
+    const d = dimOptions('quality')
+    return d.length ? d : ['low', 'mid', 'high'].map(v => ({ value: v, label: t(`options.quality.${v}`) }))
+  },
+  videoResolution: () => {
+    const d = dimOptions('videoResolution')
+    return d.length ? d : ['480p', '720p', '1080p', '2k', '4k'].map(v => ({ value: v, label: v }))
+  },
   videoScene: () => ['studio', 'desk', 'bath', 'kitchen', 'outdoor', 'tech', 'premium']
     .map(v => ({ value: v, label: t(`options.videoScene.${v}`) })),
   cameraStyle: () => ['closeup', 'slowmo', 'macro', 'orbit', 'static', 'handheld']
@@ -324,8 +420,33 @@ const canSubmit = computed(() => {
    清晰度/时长/模型任一变化都会重新向后端 /api/wimo/billing/quote 询价。 */
 const quote = ref<any>(null)
 const quoting = ref(false)
+const showBreakdown = ref(false)
 let quoteTimer: ReturnType<typeof setTimeout> | null = null
 let quoteSeq = 0
+
+function toggleBreakdown() {
+  if (quote.value && quote.value.breakdown && quote.value.breakdown.length) {
+    showBreakdown.value = !showBreakdown.value
+  }
+}
+
+/** 静态站（后端不可达）演示用的本地逐层明细，保证费用拆解仍可见 */
+function localBreakdown(cost: number, isVideo: boolean) {
+  const secs = isVideo ? Number(model.duration) || 5 : 4
+  const base = isVideo ? 22 : 8
+  const unitCost = isVideo ? 1.6 : 2
+  const res = isVideo ? model.videoResolution : model.resolution
+  const resFactor = isVideo
+    ? ({ '480p': 1, '720p': 1.4, '1080p': 1.8, '2k': 2.4, '4k': 3.2 } as Record<string, number>)[res] || 1
+    : ({ '2k': 1, '4k': 1.6 } as Record<string, number>)[res] || 1
+  return [
+    { layer: 'capability', labelZh: '能力基础价', labelEn: 'Base cost', amount: base, subtotal: base },
+    { layer: 'unit', labelZh: '单位计价', labelEn: 'Units', units: secs, unitCost, subtotal: base + unitCost * secs },
+    { layer: 'dimension', labelZh: '清晰度', labelEn: 'Resolution', option: res, optionLabelZh: res, optionLabelEn: res, factor: resFactor, subtotal: (base + unitCost * secs) * resFactor },
+    { layer: 'model', labelZh: '模型倍率', labelEn: 'Model factor', modelKey: isVideo ? model.videoModel : model.model, factor: 1, subtotal: (base + unitCost * secs) * resFactor },
+    { layer: 'clamp', labelZh: '取整 / 限价', labelEn: 'Round & clamp', total: cost }
+  ]
+}
 
 function buildCommon(): Record<string, any> {
   const c: Record<string, any> = {}
@@ -352,10 +473,13 @@ async function refreshQuote() {
   } catch {
     // 后端不可达：本地按内置规则给个演示价，避免静态站显示空
     if (seq === quoteSeq) {
+      const isVideo = schema.value.common.includes('videoModel')
+      const cost = isVideo ? 42 : 16
       quote.value = {
-        cost: schema.value.common.includes('videoModel') ? 42 : 16,
-        modelKey: schema.value.common.includes('videoModel') ? model.videoModel : model.model,
-        balance: 100, enough: true, anonymous: true, workflowKey: props.schemaKey, snapshot: {}
+        cost,
+        modelKey: isVideo ? model.videoModel : model.model,
+        balance: 100, enough: true, anonymous: true, workflowKey: props.schemaKey,
+        snapshot: {}, breakdown: localBreakdown(cost, isVideo)
       }
     }
   }

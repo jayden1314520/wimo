@@ -70,6 +70,7 @@ public class WimoWorkflowService
                 w.setMultipliers(objectMapper.writeValueAsString(d.getOrDefault("multipliers", Map.of())));
                 w.setMinCost(longVal(d.get("minCost"), 1L));
                 w.setMaxCost(longVal(d.get("maxCost"), 2000L));
+                w.setCostSource(str(d.getOrDefault("costSource", "override")));
                 w.setStepsJson(objectMapper.writeValueAsString(d.getOrDefault("steps", DEFAULT_STEPS)));
                 w.setEnabled("1");
                 w.setSortNo(intVal(d.get("sortNo"), 0));
@@ -144,6 +145,7 @@ public class WimoWorkflowService
         if (w.getMinCost() == null) w.setMinCost(cur.getMinCost());
         if (w.getMaxCost() == null) w.setMaxCost(cur.getMaxCost());
         if (w.getUnitCost() == null) w.setUnitCost(cur.getUnitCost());
+        if (w.getCostSource() == null || w.getCostSource().isBlank()) w.setCostSource(cur.getCostSource());
         if (w.getMaxCost() < w.getMinCost()) throw new WimoException("最高消耗不能低于最低消耗");
         w.setUpdateTime(new Date());
         return workflowMapper.updateWorkflow(w);

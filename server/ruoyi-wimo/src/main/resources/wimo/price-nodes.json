@@ -1,0 +1,43 @@
+[
+  { "nodeKey": "text2text:wordCount:s", "capabilityKey": "text2text", "dimension": "wordCount", "optionValue": "s", "labelZh": "≤500 字", "labelEn": "≤500 words", "factor": 1.0, "minValue": 0, "maxValue": 500, "sortNo": 1 },
+  { "nodeKey": "text2text:wordCount:m", "capabilityKey": "text2text", "dimension": "wordCount", "optionValue": "m", "labelZh": "500–2000 字", "labelEn": "500–2000 words", "factor": 1.6, "minValue": 501, "maxValue": 2000, "sortNo": 2 },
+  { "nodeKey": "text2text:wordCount:l", "capabilityKey": "text2text", "dimension": "wordCount", "optionValue": "l", "labelZh": ">2000 字", "labelEn": ">2000 words", "factor": 2.2, "minValue": 2001, "maxValue": 999999, "sortNo": 3 },
+  { "nodeKey": "text2text:language:zh", "capabilityKey": "text2text", "dimension": "language", "optionValue": "zh", "labelZh": "中文", "labelEn": "Chinese", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "text2text:language:en", "capabilityKey": "text2text", "dimension": "language", "optionValue": "en", "labelZh": "英文", "labelEn": "English", "factor": 1.2, "sortNo": 2 },
+  { "nodeKey": "text2text:language:multi", "capabilityKey": "text2text", "dimension": "language", "optionValue": "multi", "labelZh": "多语", "labelEn": "Multilingual", "factor": 1.5, "sortNo": 3 },
+
+  { "nodeKey": "text2img:resolution:720p", "capabilityKey": "text2img", "dimension": "resolution", "optionValue": "720p", "labelZh": "720P", "labelEn": "720P", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "text2img:resolution:1080p", "capabilityKey": "text2img", "dimension": "resolution", "optionValue": "1080p", "labelZh": "1080P", "labelEn": "1080P", "factor": 1.4, "sortNo": 2 },
+  { "nodeKey": "text2img:resolution:2k", "capabilityKey": "text2img", "dimension": "resolution", "optionValue": "2k", "labelZh": "2K", "labelEn": "2K", "factor": 2.0, "sortNo": 3 },
+  { "nodeKey": "text2img:resolution:4k", "capabilityKey": "text2img", "dimension": "resolution", "optionValue": "4k", "labelZh": "4K", "labelEn": "4K", "factor": 3.0, "sortNo": 4 },
+  { "nodeKey": "text2img:quality:standard", "capabilityKey": "text2img", "dimension": "quality", "optionValue": "standard", "labelZh": "标准", "labelEn": "Standard", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "text2img:quality:high", "capabilityKey": "text2img", "dimension": "quality", "optionValue": "high", "labelZh": "高清", "labelEn": "High", "factor": 1.4, "sortNo": 2 },
+
+  { "nodeKey": "img2img:resolution:2k", "capabilityKey": "img2img", "dimension": "resolution", "optionValue": "2k", "labelZh": "2K", "labelEn": "2K", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "img2img:resolution:4k", "capabilityKey": "img2img", "dimension": "resolution", "optionValue": "4k", "labelZh": "4K", "labelEn": "4K", "factor": 1.6, "sortNo": 2 },
+  { "nodeKey": "img2img:quality:low", "capabilityKey": "img2img", "dimension": "quality", "optionValue": "low", "labelZh": "低", "labelEn": "Low", "factor": 0.8, "sortNo": 1 },
+  { "nodeKey": "img2img:quality:mid", "capabilityKey": "img2img", "dimension": "quality", "optionValue": "mid", "labelZh": "中", "labelEn": "Mid", "factor": 1.0, "sortNo": 2 },
+  { "nodeKey": "img2img:quality:high", "capabilityKey": "img2img", "dimension": "quality", "optionValue": "high", "labelZh": "高", "labelEn": "High", "factor": 1.4, "sortNo": 3 },
+
+  { "nodeKey": "img2video:videoResolution:480p", "capabilityKey": "img2video", "dimension": "videoResolution", "optionValue": "480p", "labelZh": "480P", "labelEn": "480P", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "img2video:videoResolution:720p", "capabilityKey": "img2video", "dimension": "videoResolution", "optionValue": "720p", "labelZh": "720P", "labelEn": "720P", "factor": 1.4, "sortNo": 2 },
+  { "nodeKey": "img2video:videoResolution:1080p", "capabilityKey": "img2video", "dimension": "videoResolution", "optionValue": "1080p", "labelZh": "1080P", "labelEn": "1080P", "factor": 1.8, "sortNo": 3 },
+  { "nodeKey": "img2video:videoResolution:2k", "capabilityKey": "img2video", "dimension": "videoResolution", "optionValue": "2k", "labelZh": "2K", "labelEn": "2K", "factor": 2.4, "sortNo": 4 },
+  { "nodeKey": "img2video:videoResolution:4k", "capabilityKey": "img2video", "dimension": "videoResolution", "optionValue": "4k", "labelZh": "4K", "labelEn": "4K", "factor": 3.2, "sortNo": 5 },
+  { "nodeKey": "img2video:duration:5", "capabilityKey": "img2video", "dimension": "duration", "optionValue": "5", "labelZh": "5 秒", "labelEn": "5s", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "img2video:duration:10", "capabilityKey": "img2video", "dimension": "duration", "optionValue": "10", "labelZh": "10 秒", "labelEn": "10s", "factor": 1.0, "sortNo": 2 },
+  { "nodeKey": "img2video:duration:15", "capabilityKey": "img2video", "dimension": "duration", "optionValue": "15", "labelZh": "15 秒", "labelEn": "15s", "factor": 1.0, "sortNo": 3 },
+  { "nodeKey": "img2video:duration:30", "capabilityKey": "img2video", "dimension": "duration", "optionValue": "30", "labelZh": "30 秒", "labelEn": "30s", "factor": 1.0, "sortNo": 4 },
+  { "nodeKey": "img2video:duration:60", "capabilityKey": "img2video", "dimension": "duration", "optionValue": "60", "labelZh": "60 秒", "labelEn": "60s", "factor": 1.0, "sortNo": 5 },
+
+  { "nodeKey": "text2video:videoResolution:480p", "capabilityKey": "text2video", "dimension": "videoResolution", "optionValue": "480p", "labelZh": "480P", "labelEn": "480P", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "text2video:videoResolution:720p", "capabilityKey": "text2video", "dimension": "videoResolution", "optionValue": "720p", "labelZh": "720P", "labelEn": "720P", "factor": 1.4, "sortNo": 2 },
+  { "nodeKey": "text2video:videoResolution:1080p", "capabilityKey": "text2video", "dimension": "videoResolution", "optionValue": "1080p", "labelZh": "1080P", "labelEn": "1080P", "factor": 1.8, "sortNo": 3 },
+  { "nodeKey": "text2video:videoResolution:2k", "capabilityKey": "text2video", "dimension": "videoResolution", "optionValue": "2k", "labelZh": "2K", "labelEn": "2K", "factor": 2.4, "sortNo": 4 },
+  { "nodeKey": "text2video:videoResolution:4k", "capabilityKey": "text2video", "dimension": "videoResolution", "optionValue": "4k", "labelZh": "4K", "labelEn": "4K", "factor": 3.2, "sortNo": 5 },
+  { "nodeKey": "text2video:duration:5", "capabilityKey": "text2video", "dimension": "duration", "optionValue": "5", "labelZh": "5 秒", "labelEn": "5s", "factor": 1.0, "sortNo": 1 },
+  { "nodeKey": "text2video:duration:10", "capabilityKey": "text2video", "dimension": "duration", "optionValue": "10", "labelZh": "10 秒", "labelEn": "10s", "factor": 1.0, "sortNo": 2 },
+  { "nodeKey": "text2video:duration:15", "capabilityKey": "text2video", "dimension": "duration", "optionValue": "15", "labelZh": "15 秒", "labelEn": "15s", "factor": 1.0, "sortNo": 3 },
+  { "nodeKey": "text2video:duration:30", "capabilityKey": "text2video", "dimension": "duration", "optionValue": "30", "labelZh": "30 秒", "labelEn": "30s", "factor": 1.0, "sortNo": 4 },
+  { "nodeKey": "text2video:duration:60", "capabilityKey": "text2video", "dimension": "duration", "optionValue": "60", "labelZh": "60 秒", "labelEn": "60s", "factor": 1.0, "sortNo": 5 }
+]

@@ -110,7 +110,11 @@
     "costUnit": "diamonds",
     "costCalculating": "Calculating…",
     "costNotEnough": "Insufficient balance: need {need}, you have {balance} diamonds",
-    "costCharged": "{n} diamonds reserved; refunded automatically if generation fails"
+    "costCharged": "{n} diamonds reserved; refunded automatically if generation fails",
+    "costBreakdown": "Breakdown",
+    "costBreakdownHide": "Hide",
+    "breakdownTitle": "Cost breakdown by layer",
+    "breakdownFoot": "Total"
   },
   "options": {
     "platform": {

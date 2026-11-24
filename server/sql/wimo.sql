@@ -1,8 +1,9 @@
 -- ============================================================
--- 映物 VIVID · 完整业务库结构（v2：钻石 / 模型 / 工作流智能体）
+-- 映物 VIVID · 完整业务库结构（v3：能力树 / 价格节点）
 -- 执行：mysql -uroot ry < wimo.sql
--- 警告：全量重建，会清空已有演示数据；已有库请改用 wimo_upgrade.sql
--- 表：会员(含钻石账户) / 邮件日志 / 模板 / 模型 / 工作流 / 任务 / 结果 / 钻石流水
+-- 警告：全量重建，会清空已有演示数据；已有库请改用 server/upgrade/wimo_upgrade_v3.sql
+-- 表：会员(钻石) / 邮件日志 / 模板 / 能力层 / 价格节点 / 模型 / 工作流 / 任务 / 结果 / 钻石流水
+-- 计费树：能力(wimo_capability) → 档位(wimo_price_node) / 模型(wimo_model) / 工作流(wimo_workflow)
 -- ============================================================
 
 -- ----------------------------
@@ -68,8 +69,69 @@ create table wimo_schema (
 ) engine=innodb auto_increment=1 comment='功能模板配置';
 
 -- ----------------------------
+-- 3A. 能力层（计费规则树的树根：文本生成/文生图/图生图/图生视频/文生视频）
+--     每个能力分支有独立的基础价/计费单位/单价/价格区间，工作流可继承或覆盖
+--     capability_key 与 wimo_model.capability、wimo_workflow.capability 对齐
+-- ----------------------------
+drop table if exists wimo_capability;
+create table wimo_capability (
+  capability_id  bigint       not null auto_increment comment '能力ID',
+  capability_key varchar(30)  not null               comment '能力唯一标识 text2text/text2img/img2img/img2video/text2video',
+  name_zh        varchar(60)  default ''             comment '中文名',
+  name_en        varchar(60)  default ''             comment '英文名',
+  icon           varchar(30)  default ''             comment '图标',
+  base_cost      bigint       default 10             comment '该能力分支的基础钻石（每一支不同）',
+  unit           varchar(20)  default 'count'        comment '计费单位 count/second/kiloword/flat',
+  unit_cost      decimal(8,2) default 0.00           comment '每单位钻石（视频按秒/文案按千字）',
+  unit_field     varchar(40)  default ''             comment '取单位数的字段 duration/resultCount/wordCount',
+  min_cost       bigint       default 1              comment '单次最低消耗',
+  max_cost       bigint       default 2000           comment '单次最高消耗',
+  default_model  varchar(60)  default ''             comment '默认模型 key',
+  enabled        char(1)      default '1'            comment '是否启用 1/0',
+  sort_no        int          default 0              comment '排序',
+  remark         varchar(255) default ''             comment '备注',
+  create_time    datetime                            comment '创建时间',
+  update_time    datetime                            comment '更新时间',
+  primary key (capability_id),
+  unique key uk_wimo_capability_key (capability_key)
+) engine=innodb auto_increment=1 comment='能力层（计费规则树根）';
+
+-- ----------------------------
+-- 3B. 价格节点（计费规则树：能力下的维度档位，parent_id 自关联成树）
+--     node_type: group 维度分组 / option 具体档位
+--     dimension: resolution/videoResolution/quality/duration/wordCount/language/model...
+--     option 节点带 factor 倍率；数值型维度(字数)用 min_value/max_value 区间匹配
+--     管理端逐节点调价即时生效；改一个 4K 档即可影响该能力全部工作流
+-- ----------------------------
+drop table if exists wimo_price_node;
+create table wimo_price_node (
+  node_id         bigint       not null auto_increment comment '节点ID',
+  parent_id       bigint       default 0               comment '父节点ID（0=能力根下的维度分组）',
+  capability_key  varchar(30)  not null               comment '所属能力',
+  node_type       varchar(20)  default 'option'       comment 'group 维度分组 / option 档位 / model 模型倍率',
+  dimension       varchar(40)  default ''             comment '维度 key',
+  node_key        varchar(60)  default ''             comment '节点唯一 key（能力:维度:档位）',
+  option_value    varchar(40)  default ''             comment '档位值（提交参数匹配此值）',
+  label_zh        varchar(80)  default ''             comment '中文标签',
+  label_en        varchar(80)  default ''             comment '英文标签',
+  factor          decimal(8,3) default 1.000          comment '钻石倍率',
+  unit_cost       decimal(8,2) default null           comment '档位级单价覆盖（可选，优先于能力单价）',
+  min_value       bigint       default null           comment '数值维度区间下界（含）',
+  max_value       bigint       default null           comment '数值维度区间上界（含）',
+  enabled         char(1)      default '1'            comment '是否启用 1/0',
+  sort_no         int          default 0              comment '排序',
+  remark          varchar(255) default ''             comment '备注',
+  create_time     datetime                            comment '创建时间',
+  update_time     datetime                            comment '更新时间',
+  primary key (node_id),
+  unique key uk_wimo_price_node_key (node_key),
+  key idx_price_node_cap (capability_key, enabled),
+  key idx_price_node_dim (capability_key, dimension, enabled)
+) engine=innodb auto_increment=1 comment='计费价格节点（能力树档位）';
+
+-- ----------------------------
 -- 4. AI 模型注册表（管理端配置，web 端按能力动态拉取可选模型）
---    capability: text2img 文生图 / img2img 图生图 / img2video 图生视频 / text2video 文生视频
+--    capability: text2text 文本生成 / text2img 文生图 / img2img 图生图 / img2video 图生视频 / text2video 文生视频
 -- ----------------------------
 drop table if exists wimo_model;
 create table wimo_model (
@@ -115,6 +177,7 @@ create table wimo_workflow (
   multipliers   longtext                            comment '维度倍率 JSON：{videoResolution:{720p:1.4,...},quality:{...}}',
   min_cost      bigint       default 1              comment '单次最低消耗',
   max_cost      bigint       default 2000           comment '单次最高消耗',
+  cost_source   varchar(20)  default 'override'     comment '价格来源 override 用工作流自身 / inherit 继承能力层',
   steps_json    longtext                            comment '智能体执行步骤 JSON 数组（展示与编排用）',
   enabled       char(1)      default '1'            comment '是否启用 1/0',
   sort_no       int          default 0              comment '排序',
@@ -233,19 +296,22 @@ insert into sys_menu values
  (2012, '智能体工作流',2000, 5, 'workflow','wimo/workflow/index',  '', '', 1, 0, 'C', '0', '0', 'wimo:workflow:list',  'tree',     'admin', sysdate(), '', null, '13 个菜单对应的智能体与计费规则'),
  (2013, '工作流编辑', 2012, 1, '#',        '',                      '', '', 1, 0, 'F', '0', '0', 'wimo:workflow:edit',  '#',        'admin', sysdate(), '', null, ''),
  (2014, '钻石管理',   2000, 6, 'diamond',  'wimo/diamond/index',   '', '', 1, 0, 'C', '0', '0', 'wimo:diamond:list',   'money',    'admin', sysdate(), '', null, '会员余额与钻石流水'),
- (2015, '钻石调整',   2014, 1, '#',        '',                      '', '', 1, 0, 'F', '0', '0', 'wimo:diamond:edit',   '#',        'admin', sysdate(), '', null, '');
+ (2015, '钻石调整',   2014, 1, '#',        '',                      '', '', 1, 0, 'F', '0', '0', 'wimo:diamond:edit',   '#',        'admin', sysdate(), '', null, ''),
+ (2016, '计费规则树', 2000, 8, 'priceTree','wimo/priceTree/index', '', '', 1, 0, 'C', '0', '0', 'wimo:capability:list','tree',     'admin', sysdate(), '', null, '能力→档位→模型→工作流 四级钻石配置树'),
+ (2017, '规则树编辑', 2016, 1, '#',        '',                      '', '', 1, 0, 'F', '0', '0', 'wimo:capability:edit','#',        'admin', sysdate(), '', null, '');
 
 -- ----------------------------
 -- 10. 字典
 -- ----------------------------
-delete from sys_dict_type where dict_type in ('wimo_task_status','wimo_task_group','wimo_model_capability','wimo_diamond_change','wimo_billing_unit');
-delete from sys_dict_data where dict_type in ('wimo_task_status','wimo_task_group','wimo_model_capability','wimo_diamond_change','wimo_billing_unit');
+delete from sys_dict_type where dict_type in ('wimo_task_status','wimo_task_group','wimo_model_capability','wimo_diamond_change','wimo_billing_unit','wimo_price_dimension');
+delete from sys_dict_data where dict_type in ('wimo_task_status','wimo_task_group','wimo_model_capability','wimo_diamond_change','wimo_billing_unit','wimo_price_dimension');
 insert into sys_dict_type (dict_id, dict_name, dict_type, status, create_by, create_time, remark) values
  (100, '生成任务状态', 'wimo_task_status',      '0', 'admin', sysdate(), '映物任务状态'),
  (101, '功能分组',     'wimo_task_group',       '0', 'admin', sysdate(), '映物功能分组'),
- (102, '模型能力',     'wimo_model_capability', '0', 'admin', sysdate(), '文生图/图生图/图生视频/文生视频'),
+ (102, '模型能力',     'wimo_model_capability', '0', 'admin', sysdate(), '文本生成/文生图/图生图/图生视频/文生视频'),
  (103, '钻石流水类型', 'wimo_diamond_change',   '0', 'admin', sysdate(), '钻石账户变动类型'),
- (104, '计费单位',     'wimo_billing_unit',     '0', 'admin', sysdate(), '工作流计费单位');
+ (104, '计费单位',     'wimo_billing_unit',     '0', 'admin', sysdate(), '工作流计费单位'),
+ (105, '计费维度',     'wimo_price_dimension',  '0', 'admin', sysdate(), '清晰度/时长/画质/字数/语言/模型');
 insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark) values
  (1000, 1, '待生成',   '0', 'wimo_task_status', '', 'info',    'Y', '0', 'admin', sysdate(), ''),
  (1001, 2, '生成中',   '1', 'wimo_task_status', '', 'primary', 'N', '0', 'admin', sysdate(), ''),
@@ -255,6 +321,7 @@ insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_ty
  (1010, 1, '电商套图', 'ecommerce', 'wimo_task_group', '', '', 'N', '0', 'admin', sysdate(), ''),
  (1011, 2, '模特相关', 'model',      'wimo_task_group', '', '', 'N', '0', 'admin', sysdate(), ''),
  (1012, 3, '视频模块', 'video',      'wimo_task_group', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1019, 0, '文本生成', 'text2text',  'wimo_model_capability', '', 'info',    'N', '0', 'admin', sysdate(), ''),
  (1020, 1, '文生图',   'text2img',   'wimo_model_capability', '', 'primary', 'N', '0', 'admin', sysdate(), ''),
  (1021, 2, '图生图',   'img2img',    'wimo_model_capability', '', 'success', 'N', '0', 'admin', sysdate(), ''),
  (1022, 3, '图生视频', 'img2video',  'wimo_model_capability', '', 'warning', 'N', '0', 'admin', sysdate(), ''),
@@ -265,6 +332,14 @@ insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_ty
  (1033, 4, '生成扣减', 'consume',  'wimo_diamond_change', '', 'danger',  'N', '0', 'admin', sysdate(), ''),
  (1034, 5, '失败退还', 'refund',   'wimo_diamond_change', '', 'warning', 'N', '0', 'admin', sysdate(), ''),
  (1035, 6, '人工调整', 'adjust',   'wimo_diamond_change', '', 'primary', 'N', '0', 'admin', sysdate(), ''),
- (1040, 1, '固定',     'flat',   'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
- (1041, 2, '按张',     'count',  'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
- (1042, 3, '按秒',     'second', 'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), '');
+ (1040, 1, '固定',     'flat',     'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1041, 2, '按张',     'count',    'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1042, 3, '按秒',     'second',   'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1043, 4, '按千字',   'kiloword', 'wimo_billing_unit', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1050, 1, '图片清晰度',   'resolution',      'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1051, 2, '视频清晰度',   'videoResolution', 'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1052, 3, '画质',         'quality',         'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1053, 4, '时长',         'duration',        'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1054, 5, '字数',         'wordCount',       'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1055, 6, '语言',         'language',        'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), ''),
+ (1056, 7, '模型',         'model',           'wimo_price_dimension', '', '', 'N', '0', 'admin', sysdate(), '');

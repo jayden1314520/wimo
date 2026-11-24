@@ -110,7 +110,11 @@
     "costUnit": "钻石",
     "costCalculating": "询价中…",
     "costNotEnough": "余额不足：本次需 {need} 钻石，当前 {balance} 钻石",
-    "costCharged": "已预扣 {n} 钻石，生成失败将自动退还"
+    "costCharged": "已预扣 {n} 钻石，生成失败将自动退还",
+    "costBreakdown": "查看明细",
+    "costBreakdownHide": "收起明细",
+    "breakdownTitle": "逐层费用拆解",
+    "breakdownFoot": "合计"
   },
   "options": {
     "platform": {

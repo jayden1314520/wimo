@@ -89,6 +89,64 @@ export interface WimoWorkflow {
   defaultModel: string
 }
 
+/** 计费规则树 · 维度档位节点 */
+export interface WimoPriceOption {
+  nodeKey: string
+  dimension: string
+  optionValue: string
+  labelZh: string
+  labelEn: string
+  factor: number
+  enabled: string
+  sortNo?: number
+  minValue?: number | null
+  maxValue?: number | null
+}
+
+/** 计费规则树 · 维度分组 */
+export interface WimoDimensionGroup {
+  dimension: string
+  labelZh: string
+  labelEn: string
+  enabled: string
+  options: WimoPriceOption[]
+}
+
+/** 计费规则树 · 一个能力分支 */
+export interface WimoCapability {
+  capabilityKey: string
+  nameZh: string
+  nameEn: string
+  baseCost: number
+  unit: string
+  unitCost: number
+  unitField: string
+  minCost: number
+  maxCost: number
+  defaultModel: string
+  dimensions: WimoDimensionGroup[]
+  models: { modelKey: string; nameZh: string; nameEn: string; costMultiplier: number; enabled: string }[]
+}
+
+/** 逐层求值明细（用户端费用拆解） */
+export interface WimoBreakdownItem {
+  layer: string
+  labelZh: string
+  labelEn: string
+  dimension?: string
+  option?: string
+  optionLabelZh?: string
+  optionLabelEn?: string
+  factor?: number
+  units?: number
+  unitCost?: number
+  amount?: number
+  subtotal?: number
+  total?: number
+  modelKey?: string
+  matched?: boolean
+}
+
 /** 提交前预估消耗 */
 export interface WimoQuote {
   cost: number
@@ -98,6 +156,7 @@ export interface WimoQuote {
   modelKey: string
   workflowKey: string
   snapshot: Record<string, any>
+  breakdown?: WimoBreakdownItem[]
 }
 
 export function useWimoApi() {
@@ -146,6 +205,14 @@ export function useWimoApi() {
       if (workflowKey) q.set('workflow', workflowKey)
       if (capability) q.set('capability', capability)
       return request<WimoModel[]>(`/api/wimo/model/list?${q.toString()}`)
+    },
+
+    /** 计费规则树：传 workflow 只返回其所属能力分支（含维度档位与模型倍率） */
+    capabilityTree: (workflowKey?: string, capability?: string) => {
+      const q = new URLSearchParams()
+      if (workflowKey) q.set('workflow', workflowKey)
+      if (capability) q.set('capability', capability)
+      return request<WimoCapability | WimoCapability[]>(`/api/wimo/capability/tree?${q.toString()}`)
     },
 
     /** 提交前预估本次消耗钻石（随清晰度/时长/模型实时变化） */

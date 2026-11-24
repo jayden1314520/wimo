@@ -51,6 +51,9 @@ public class WimoWorkflow
     private Long minCost;
     private Long maxCost;
 
+    /** 价格来源：override 用工作流自身基础价 / inherit 继承能力层基础价 */
+    private String costSource;
+
     /** 智能体执行步骤 JSON 数组 */
     private String stepsJson;
 

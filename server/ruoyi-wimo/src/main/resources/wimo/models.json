@@ -119,5 +119,27 @@
     "configJson": "{\"maxDuration\":60,\"resolutions\":[\"480p\",\"720p\",\"1080p\",\"2k\",\"4k\"]}",
     "sortNo": 11,
     "remark": "文生视频旗舰模型"
+  },
+  {
+    "modelKey": "wimo-llm-lite",
+    "nameZh": "映物文案 轻量",
+    "nameEn": "VIVID Copy Lite",
+    "capability": "text2text",
+    "provider": "mock",
+    "costMultiplier": 1.00,
+    "configJson": "{\"maxWords\":2000,\"languages\":[\"zh\",\"en\"]}",
+    "sortNo": 12,
+    "remark": "文本生成能力预留模型（暂不挂菜单）"
+  },
+  {
+    "modelKey": "wimo-llm-pro",
+    "nameZh": "映物文案 Pro",
+    "nameEn": "VIVID Copy Pro",
+    "capability": "text2text",
+    "provider": "mock",
+    "costMultiplier": 1.80,
+    "configJson": "{\"maxWords\":8000,\"languages\":[\"zh\",\"en\",\"multi\"]}",
+    "sortNo": 13,
+    "remark": "文本生成能力预留模型（暂不挂菜单）"
   }
 ]
